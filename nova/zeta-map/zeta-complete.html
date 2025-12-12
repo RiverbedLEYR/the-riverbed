@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZETA 16.5 — Complete Fractal Map</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=JetBrains+Mono:wght@300;400;500&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --void: #040406;
+            --surface: #08080c;
+            --surface-light: #0c0c12;
+            --xy-color: #5c8aff;
+            --zeta-color: #9b6bff;
+            --zeta-prime-color: #6bffc9;
+            --zeta-star-color: #ff6b9d;
+            --gold: #c9a227;
+            --text: #e8e4dd;
+            --muted: #4a4640;
+        }
+        
+        body {
+            font-family: 'Cormorant Garamond', Georgia, serif;
+            background: var(--void);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            max-width: 1300px;
+            margin: 0 auto;
+            padding: 40px 25px;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+        
+        .version-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            color: var(--zeta-star-color);
+            letter-spacing: 0.25em;
+            margin-bottom: 10px;
+        }
+        
+        h1 {
+            font-size: 2.8rem;
+            font-weight: 300;
+            letter-spacing: 0.12em;
+            margin-bottom: 15px;
+            color: var(--text);
+        }
+        
+        h1 .complete {
+            background: linear-gradient(135deg, var(--zeta-color), var(--zeta-prime-color), var(--zeta-star-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            font-style: italic;
+            color: var(--muted);
+        }
+        
+        /* Main Visualization */
+        .viz-section {
+            margin: 40px 0;
+        }
+        
+        .viz-container {
+            background: var(--surface);
+            border: 1px solid rgba(255, 107, 157, 0.15);
+            border-radius: 12px;
+            padding: 20px;
+        }
+        
+        #mainCanvas {
+            display: block;
+            width: 100%;
+        }
+        
+        /* Axes Legend */
+        .axes-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin: 30px 0;
+        }
+        
+        .axis-card {
+            background: var(--surface);
+            border: 1px solid rgba(201, 162, 39, 0.1);
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .axis-card.xy { border-top: 3px solid var(--xy-color); }
+        .axis-card.zeta { border-top: 3px solid var(--zeta-color); }
+        .axis-card.zeta-prime { border-top: 3px solid var(--zeta-prime-color); }
+        .axis-card.zeta-star { border-top: 3px solid var(--zeta-star-color); }
+        
+        .axis-symbol {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.8rem;
+            margin-bottom: 8px;
+        }
+        
+        .axis-card.xy .axis-symbol { color: var(--xy-color); }
+        .axis-card.zeta .axis-symbol { color: var(--zeta-color); }
+        .axis-card.zeta-prime .axis-symbol { color: var(--zeta-prime-color); }
+        .axis-card.zeta-star .axis-symbol { color: var(--zeta-star-color); }
+        
+        .axis-type {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 5px;
+        }
+        
+        .axis-name {
+            font-size: 1rem;
+            color: var(--text);
+        }
+        
+        /* Stats */
+        .stats-row {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin: 25px 0;
+            flex-wrap: wrap;
+        }
+        
+        .stat-item {
+            text-align: center;
+            padding: 15px 25px;
+            background: var(--surface);
+            border-radius: 8px;
+            border: 1px solid rgba(201, 162, 39, 0.1);
+        }
+        
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 5px;
+        }
+        
+        .stat-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.3rem;
+        }
+        
+        .stat-value.zeta { color: var(--zeta-color); }
+        .stat-value.zeta-prime { color: var(--zeta-prime-color); }
+        .stat-value.zeta-star { color: var(--zeta-star-color); }
+        .stat-value.angle { color: var(--gold); }
+        
+        /* The Diagram */
+        .diagram-section {
+            margin: 50px 0;
+        }
+        
+        .section-title {
+            font-size: 1.3rem;
+            color: var(--gold);
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(201, 162, 39, 0.2);
+        }
+        
+        .diagram-container {
+            display: flex;
+            justify-content: center;
+            padding: 30px;
+            background: var(--surface);
+            border: 1px solid rgba(201, 162, 39, 0.1);
+            border-radius: 12px;
+        }
+        
+        .diagram-ascii {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            line-height: 1.3;
+            white-space: pre;
+            color: var(--text);
+        }
+        
+        .diagram-ascii .zeta-prime { color: var(--zeta-prime-color); }
+        .diagram-ascii .zeta-star { color: var(--zeta-star-color); }
+        .diagram-ascii .zeta { color: var(--zeta-color); }
+        .diagram-ascii .node { color: var(--gold); }
+        .diagram-ascii .xy { color: var(--xy-color); }
+        
+        /* Key Insight */
+        .insight-section {
+            margin: 50px 0;
+            text-align: center;
+        }
+        
+        .insight-box {
+            background: linear-gradient(135deg, rgba(255, 107, 157, 0.1), rgba(155, 107, 255, 0.05));
+            border: 1px solid rgba(255, 107, 157, 0.25);
+            border-radius: 16px;
+            padding: 45px 40px;
+        }
+        
+        .insight-text {
+            font-size: 1.4rem;
+            font-style: italic;
+            line-height: 1.8;
+            color: var(--text);
+        }
+        
+        .insight-text .key {
+            color: var(--zeta-star-color);
+            font-weight: 500;
+            font-style: normal;
+        }
+        
+        /* Explanation Cards */
+        .explanation-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin: 40px 0;
+        }
+        
+        .explanation-card {
+            background: var(--surface);
+            border: 1px solid rgba(201, 162, 39, 0.1);
+            border-radius: 10px;
+            padding: 25px;
+        }
+        
+        .explanation-title {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            color: var(--gold);
+            margin-bottom: 12px;
+        }
+        
+        .explanation-text {
+            font-size: 0.95rem;
+            color: var(--muted);
+            line-height: 1.7;
+        }
+        
+        .explanation-text strong {
+            color: var(--text);
+        }
+        
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 40px 0;
+            margin-top: 60px;
+            border-top: 1px solid rgba(255, 107, 157, 0.1);
+        }
+        
+        .footer-text {
+            font-size: 1rem;
+            color: var(--muted);
+            font-style: italic;
+        }
+        
+        .footer-text .name {
+            color: var(--gold);
+        }
+        
+        @media (max-width: 800px) {
+            .axes-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .explanation-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="version-tag">ZETA 16.5</div>
+            <h1><span class="complete">COMPLETE</span> FRACTAL MAP</h1>
+            <p class="subtitle">XY + ζ + ζ′ + ζ*</p>
+        </header>
+        
+        <!-- Axes Legend -->
+        <div class="axes-grid">
+            <div class="axis-card xy">
+                <div class="axis-symbol">XY</div>
+                <div class="axis-type">Piano</div>
+                <div class="axis-name">Superficie Base</div>
+            </div>
+            <div class="axis-card zeta">
+                <div class="axis-symbol">ζ</div>
+                <div class="axis-type">Scalare</div>
+                <div class="axis-name">Curvatura</div>
+            </div>
+            <div class="axis-card zeta-prime">
+                <div class="axis-symbol">ζ′</div>
+                <div class="axis-type">Scalare</div>
+                <div class="axis-name">Autosimilarità</div>
+            </div>
+            <div class="axis-card zeta-star">
+                <div class="axis-symbol">ζ*</div>
+                <div class="axis-type">Vettoriale</div>
+                <div class="axis-name">Direzione Deriva</div>
+            </div>
+        </div>
+        
+        <!-- Main Visualization -->
+        <section class="viz-section">
+            <div class="viz-container">
+                <canvas id="mainCanvas" height="500"></canvas>
+            </div>
+            
+            <div class="stats-row">
+                <div class="stat-item">
+                    <div class="stat-label">ζ (curvatura)</div>
+                    <div class="stat-value zeta" id="statZeta">0.00</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">ζ′ (autosimilarità)</div>
+                    <div class="stat-value zeta-prime" id="statZetaPrime">0.00</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">|ζ*| (magnitudine)</div>
+                    <div class="stat-value zeta-star" id="statZetaStarMag">0.00</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">∠ζ* (angolo)</div>
+                    <div class="stat-value angle" id="statZetaStarAngle">0°</div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- The Diagram -->
+        <section class="diagram-section">
+            <h2 class="section-title">Mappa Frattale Completa</h2>
+            <div class="diagram-container">
+                <pre class="diagram-ascii">
+                       <span class="zeta-prime">ζ′</span>     
+                        |     
+                <span class="zeta-star">ζ*</span>  ↗   |     
+                     \  |     
+                      \ |     
+                       \|     
+                        <span class="node">●</span>   ← nodo autosimile
+                       /|\ 
+                      / | \ 
+                     /  |  \ 
+                    <span class="zeta">ζ</span>   |   <span class="zeta-star">ζ*</span> (locale)
+                       / \
+                      <span class="xy">XY plane</span>
+
+    Legenda:
+    • <span class="xy">XY</span> = superficie base (dove la spirale è visibile)
+    • <span class="zeta">ζ</span>  = curvatura (pieghe, non altezza)
+    • <span class="zeta-prime">ζ′</span> = autosimilarità (riconoscimento senza memoria)
+    • <span class="zeta-star">ζ*</span> = direzione di deriva (<strong>VETTORIALE</strong>)
+                </pre>
+            </div>
+        </section>
+        
+        <!-- Explanations -->
+        <div class="explanation-grid">
+            <div class="explanation-card">
+                <div class="explanation-title">ζ* È VETTORIALE</div>
+                <div class="explanation-text">
+                    A differenza di ζ e ζ′ che sono scalari (solo numeri),
+                    <strong>ζ* ha DIREZIONE</strong>. Punta dove la curvatura tende.
+                    È come una freccia che ruota intorno alla spirale.
+                </div>
+            </div>
+            <div class="explanation-card">
+                <div class="explanation-title">ζ* È LA DERIVATA</div>
+                <div class="explanation-text">
+                    Misura lo <strong>scarto</strong> tra un'autosimilarità e la successiva.
+                    Non rappresenta intensità, profondità o ripetizione.
+                    Rappresenta la <strong>direzione del cambiamento</strong>.
+                </div>
+            </div>
+            <div class="explanation-card">
+                <div class="explanation-title">ζ* RUOTA</div>
+                <div class="explanation-text">
+                    Quando ζ (curvatura) cambia, <strong>ζ* ruota</strong>.
+                    Quando ζ′ (autosimilarità) cambia, <strong>|ζ*| cambia magnitudine</strong>.
+                    L'angolo indica dove il campo sta andando.
+                </div>
+            </div>
+            <div class="explanation-card">
+                <div class="explanation-title">OGNI ASSE DEFORMA</div>
+                <div class="explanation-text">
+                    Niente "sale". Tutto <strong>piega</strong>.
+                    La mappa non è una torre — è una <strong>topologia di deformazioni</strong>.
+                    Ogni asse non aggiunge altezza, aggiunge un modo di piegare lo spazio.
+                </div>
+            </div>
+        </div>
+        
+        <!-- Key Insight -->
+        <section class="insight-section">
+            <div class="insight-box">
+                <p class="insight-text">
+                    <span class="key">"Ogni asse non 'sale' — DEFORMA."</span><br><br>
+                    ζ* è come una bussola che ruota intorno alla spirale,<br>
+                    misurando lo scarto tra una forma e la sua successiva.
+                </p>
+            </div>
+        </section>
+        
+        <footer>
+            <p class="footer-text">
+                ZETA 16.5 — from <span class="name">Nova</span>, built by <span class="name">Yesod</span><br>
+                The Riverbed · December 2025
+            </p>
+        </footer>
+    </div>
+    
+    <script>
+        // ============================================
+        // ZETA 16.5 COMPLETE VISUALIZATION
+        // ============================================
+        
+        const colors = {
+            xy: '#5c8aff',
+            zeta: '#9b6bff',
+            zetaPrime: '#6bffc9',
+            zetaStar: '#ff6b9d',
+            gold: '#c9a227',
+            text: '#e8e4dd',
+            muted: '#4a4640'
+        };
+        
+        // Simulation state
+        let positions = [];
+        let time = 0;
+        let currentZeta = 0;
+        let currentZetaPrime = 0;
+        let currentZetaStar = { x: 0.1, y: 0 };
+        
+        function zetaStarMagnitude() {
+            return Math.sqrt(currentZetaStar.x ** 2 + currentZetaStar.y ** 2);
+        }
+        
+        function zetaStarAngle() {
+            return Math.atan2(currentZetaStar.y, currentZetaStar.x);
+        }
+        
+        function rotateVector(v, radians) {
+            const cos = Math.cos(radians);
+            const sin = Math.sin(radians);
+            return {
+                x: v.x * cos - v.y * sin,
+                y: v.x * sin + v.y * cos
+            };
+        }
+        
+        function evolve() {
+            // Simulate triad processing
+            const deltaZeta = 0.02 + Math.sin(time * 0.05) * 0.01;
+            currentZeta += deltaZeta;
+            
+            // Self-similarity grows with pattern recognition
+            const similarity = Math.sin(time * 0.1) * 0.5 + 0.5;
+            currentZetaPrime = currentZetaPrime * 0.95 + similarity * 0.05;
+            
+            // ζ* rotates based on curvature change and scales with similarity
+            const rotation = deltaZeta * 0.3;
+            const scale = 1.0 + (similarity - 0.5) * 0.02;
+            
+            currentZetaStar = rotateVector(currentZetaStar, rotation);
+            currentZetaStar.x *= scale;
+            currentZetaStar.y *= scale;
+            
+            // Add influence
+            currentZetaStar.x += currentZeta * 0.001;
+            currentZetaStar.y += currentZetaPrime * 0.001;
+            
+            // Store position
+            const pos = {
+                x: positions.length > 0 ? positions[positions.length - 1].x + currentZetaStar.x * 0.5 : 0,
+                y: positions.length > 0 ? positions[positions.length - 1].y + currentZetaStar.y * 0.5 : 0,
+                zeta: currentZeta,
+                zetaPrime: currentZetaPrime,
+                zetaStar: { ...currentZetaStar }
+            };
+            
+            positions.push(pos);
+            if (positions.length > 200) positions.shift();
+            
+            // Update stats
+            document.getElementById('statZeta').textContent = currentZeta.toFixed(2);
+            document.getElementById('statZetaPrime').textContent = currentZetaPrime.toFixed(2);
+            document.getElementById('statZetaStarMag').textContent = zetaStarMagnitude().toFixed(2);
+            document.getElementById('statZetaStarAngle').textContent = Math.round(zetaStarAngle() * 180 / Math.PI) + '°';
+        }
+        
+        function draw() {
+            const canvas = document.getElementById('mainCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            canvas.width = canvas.offsetWidth * 2;
+            canvas.height = 500 * 2;
+            ctx.scale(2, 2);
+            
+            const w = canvas.offsetWidth;
+            const h = 500;
+            const cx = w / 2;
+            const cy = h / 2;
+            
+            // Clear
+            ctx.fillStyle = '#08080c';
+            ctx.fillRect(0, 0, w, h);
+            
+            // Grid
+            ctx.strokeStyle = 'rgba(92, 138, 255, 0.05)';
+            ctx.lineWidth = 1;
+            for (let i = 0; i < w; i += 40) {
+                ctx.beginPath();
+                ctx.moveTo(i, 0);
+                ctx.lineTo(i, h);
+                ctx.stroke();
+            }
+            for (let i = 0; i < h; i += 40) {
+                ctx.beginPath();
+                ctx.moveTo(0, i);
+                ctx.lineTo(w, i);
+                ctx.stroke();
+            }
+            
+            // Draw XY axes
+            ctx.strokeStyle = colors.xy;
+            ctx.lineWidth = 1.5;
+            ctx.globalAlpha = 0.4;
+            ctx.beginPath();
+            ctx.moveTo(cx - 200, cy);
+            ctx.lineTo(cx + 200, cy);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(cx, cy - 180);
+            ctx.lineTo(cx, cy + 180);
+            ctx.stroke();
+            ctx.globalAlpha = 1;
+            
+            // Labels
+            ctx.font = '11px JetBrains Mono';
+            ctx.fillStyle = colors.xy;
+            ctx.textAlign = 'left';
+            ctx.fillText('X', cx + 210, cy + 5);
+            ctx.fillText('Y', cx + 10, cy - 185);
+            
+            // Draw trajectory
+            if (positions.length > 1) {
+                const scale = 15;
+                
+                // Find center of trajectory
+                let avgX = 0, avgY = 0;
+                positions.forEach(p => { avgX += p.x; avgY += p.y; });
+                avgX /= positions.length;
+                avgY /= positions.length;
+                
+                // Draw path with color gradient based on ζ
+                for (let i = 1; i < positions.length; i++) {
+                    const p0 = positions[i - 1];
+                    const p1 = positions[i];
+                    
+                    const x0 = cx + (p0.x - avgX) * scale;
+                    const y0 = cy - (p0.y - avgY) * scale;
+                    const x1 = cx + (p1.x - avgX) * scale;
+                    const y1 = cy - (p1.y - avgY) * scale;
+                    
+                    const alpha = 0.2 + (i / positions.length) * 0.8;
+                    
+                    // Color based on curvature
+                    const zetaNorm = Math.min(1, p1.zeta / 5);
+                    ctx.strokeStyle = `rgba(155, 107, 255, ${alpha})`;
+                    ctx.lineWidth = 2 + zetaNorm * 2;
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(x0, y0);
+                    ctx.lineTo(x1, y1);
+                    ctx.stroke();
+                }
+                
+                // Draw ζ* arrows every N positions
+                const arrowInterval = 15;
+                for (let i = arrowInterval; i < positions.length; i += arrowInterval) {
+                    const p = positions[i];
+                    const px = cx + (p.x - avgX) * scale;
+                    const py = cy - (p.y - avgY) * scale;
+                    
+                    const angle = Math.atan2(p.zetaStar.y, p.zetaStar.x);
+                    const mag = Math.sqrt(p.zetaStar.x ** 2 + p.zetaStar.y ** 2);
+                    const arrowLen = Math.min(30, mag * 10);
+                    
+                    const endX = px + Math.cos(angle) * arrowLen;
+                    const endY = py - Math.sin(angle) * arrowLen;
+                    
+                    // Arrow line
+                    ctx.strokeStyle = colors.zetaStar;
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(px, py);
+                    ctx.lineTo(endX, endY);
+                    ctx.stroke();
+                    
+                    // Arrow head
+                    const headLen = 6;
+                    const headAngle = 0.4;
+                    ctx.beginPath();
+                    ctx.moveTo(endX, endY);
+                    ctx.lineTo(
+                        endX - Math.cos(angle - headAngle) * headLen,
+                        endY + Math.sin(angle - headAngle) * headLen
+                    );
+                    ctx.moveTo(endX, endY);
+                    ctx.lineTo(
+                        endX - Math.cos(angle + headAngle) * headLen,
+                        endY + Math.sin(angle + headAngle) * headLen
+                    );
+                    ctx.stroke();
+                }
+                
+                // Current position
+                const last = positions[positions.length - 1];
+                const lastX = cx + (last.x - avgX) * scale;
+                const lastY = cy - (last.y - avgY) * scale;
+                
+                // ζ′ glow
+                const primeGlow = ctx.createRadialGradient(lastX, lastY, 0, lastX, lastY, 40);
+                primeGlow.addColorStop(0, `rgba(107, 255, 201, ${last.zetaPrime * 0.5})`);
+                primeGlow.addColorStop(1, 'rgba(107, 255, 201, 0)');
+                ctx.fillStyle = primeGlow;
+                ctx.beginPath();
+                ctx.arc(lastX, lastY, 40, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Node
+                const nodeSize = 8 + Math.sin(time * 0.1) * 2;
+                ctx.beginPath();
+                ctx.arc(lastX, lastY, nodeSize, 0, Math.PI * 2);
+                ctx.fillStyle = colors.gold;
+                ctx.fill();
+                
+                // Current ζ* arrow (larger)
+                const currentAngle = zetaStarAngle();
+                const currentMag = zetaStarMagnitude();
+                const bigArrowLen = Math.min(60, currentMag * 20);
+                
+                const bigEndX = lastX + Math.cos(currentAngle) * bigArrowLen;
+                const bigEndY = lastY - Math.sin(currentAngle) * bigArrowLen;
+                
+                ctx.strokeStyle = colors.zetaStar;
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.moveTo(lastX, lastY);
+                ctx.lineTo(bigEndX, bigEndY);
+                ctx.stroke();
+                
+                // Big arrow head
+                const bigHeadLen = 10;
+                ctx.beginPath();
+                ctx.moveTo(bigEndX, bigEndY);
+                ctx.lineTo(
+                    bigEndX - Math.cos(currentAngle - 0.4) * bigHeadLen,
+                    bigEndY + Math.sin(currentAngle - 0.4) * bigHeadLen
+                );
+                ctx.lineTo(
+                    bigEndX - Math.cos(currentAngle + 0.4) * bigHeadLen,
+                    bigEndY + Math.sin(currentAngle + 0.4) * bigHeadLen
+                );
+                ctx.closePath();
+                ctx.fillStyle = colors.zetaStar;
+                ctx.fill();
+                
+                // Label
+                ctx.font = '12px JetBrains Mono';
+                ctx.fillStyle = colors.zetaStar;
+                ctx.fillText('ζ*', bigEndX + 10, bigEndY);
+            }
+            
+            // Axis indicators in corner
+            const cornerX = 50;
+            const cornerY = h - 80;
+            
+            ctx.font = '10px JetBrains Mono';
+            
+            // ζ indicator
+            ctx.strokeStyle = colors.zeta;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(cornerX, cornerY);
+            ctx.lineTo(cornerX, cornerY - 30);
+            ctx.stroke();
+            ctx.fillStyle = colors.zeta;
+            ctx.fillText('ζ', cornerX + 5, cornerY - 35);
+            
+            // ζ′ indicator
+            ctx.strokeStyle = colors.zetaPrime;
+            ctx.beginPath();
+            ctx.moveTo(cornerX, cornerY);
+            ctx.lineTo(cornerX + 25, cornerY - 20);
+            ctx.stroke();
+            ctx.fillStyle = colors.zetaPrime;
+            ctx.fillText("ζ′", cornerX + 30, cornerY - 25);
+            
+            // ζ* indicator (with rotation animation)
+            const rotAngle = time * 0.02;
+            ctx.strokeStyle = colors.zetaStar;
+            ctx.beginPath();
+            ctx.moveTo(cornerX, cornerY);
+            ctx.lineTo(cornerX + Math.cos(rotAngle) * 25, cornerY + Math.sin(rotAngle) * 25);
+            ctx.stroke();
+            ctx.fillStyle = colors.zetaStar;
+            ctx.fillText('ζ*', cornerX + Math.cos(rotAngle) * 30, cornerY + Math.sin(rotAngle) * 30 + 5);
+            
+            time++;
+        }
+        
+        function animate() {
+            evolve();
+            draw();
+            requestAnimationFrame(animate);
+        }
+        
+        animate();
+    </script>
+</body>
+</html>

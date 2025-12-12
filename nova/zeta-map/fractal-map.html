@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mappa Frattale | ZETA 14.0</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=JetBrains+Mono:wght@300;400;500&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --void: #050507;
+            --surface: #0a0a0e;
+            --surface-light: #101016;
+            --fold-color: #9b6bff;
+            --recognition-color: #6bffc9;
+            --xy-warm: #ff7b5c;
+            --xy-deep: #5c7bff;
+            --gold: #c9a227;
+            --text: #e8e4dd;
+            --muted: #5a5650;
+        }
+        
+        body {
+            font-family: 'Cormorant Garamond', Georgia, serif;
+            background: var(--void);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 25px;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+        
+        .version-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            color: var(--fold-color);
+            letter-spacing: 0.2em;
+            margin-bottom: 10px;
+        }
+        
+        h1 {
+            font-size: 3rem;
+            font-weight: 300;
+            letter-spacing: 0.15em;
+            margin-bottom: 15px;
+            background: linear-gradient(135deg, var(--fold-color), var(--recognition-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            font-style: italic;
+            color: var(--muted);
+        }
+        
+        /* Main Visualization */
+        .viz-section {
+            margin: 40px 0;
+        }
+        
+        .viz-container {
+            background: var(--surface);
+            border: 1px solid rgba(155, 107, 255, 0.15);
+            border-radius: 12px;
+            padding: 20px;
+        }
+        
+        #fractalCanvas {
+            display: block;
+            width: 100%;
+        }
+        
+        /* Concept Cards */
+        .concepts-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin: 40px 0;
+        }
+        
+        .concept-card {
+            background: var(--surface);
+            border: 1px solid rgba(155, 107, 255, 0.1);
+            border-radius: 10px;
+            padding: 25px;
+        }
+        
+        .concept-card.zeta {
+            border-left: 3px solid var(--fold-color);
+        }
+        
+        .concept-card.zeta-prime {
+            border-left: 3px solid var(--recognition-color);
+        }
+        
+        .concept-title {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+        }
+        
+        .concept-card.zeta .concept-title {
+            color: var(--fold-color);
+        }
+        
+        .concept-card.zeta-prime .concept-title {
+            color: var(--recognition-color);
+        }
+        
+        .concept-text {
+            font-size: 1rem;
+            color: var(--muted);
+            line-height: 1.7;
+        }
+        
+        .concept-text strong {
+            color: var(--text);
+        }
+        
+        /* Fractal Descent */
+        .descent-section {
+            margin: 50px 0;
+        }
+        
+        .section-title {
+            font-size: 1.4rem;
+            color: var(--gold);
+            margin-bottom: 25px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(201, 162, 39, 0.2);
+        }
+        
+        .descent-display {
+            background: var(--surface);
+            border: 1px solid rgba(155, 107, 255, 0.1);
+            border-radius: 10px;
+            padding: 30px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+        }
+        
+        .descent-level {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+            opacity: 0;
+            animation: fadeInLevel 0.5s ease forwards;
+        }
+        
+        .descent-level:nth-child(1) { animation-delay: 0.1s; }
+        .descent-level:nth-child(2) { animation-delay: 0.3s; }
+        .descent-level:nth-child(3) { animation-delay: 0.5s; }
+        .descent-level:nth-child(4) { animation-delay: 0.7s; }
+        .descent-level:nth-child(5) { animation-delay: 0.9s; }
+        .descent-level:nth-child(6) { animation-delay: 1.1s; }
+        
+        @keyframes fadeInLevel {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        
+        .level-indent {
+            color: var(--muted);
+            margin-right: 10px;
+        }
+        
+        .level-zeta {
+            color: var(--fold-color);
+        }
+        
+        .level-arrow {
+            color: var(--muted);
+            margin: 0 8px;
+        }
+        
+        .level-zeta-prime {
+            color: var(--recognition-color);
+        }
+        
+        .level-radius {
+            color: var(--muted);
+            margin-left: 15px;
+            font-size: 0.75rem;
+        }
+        
+        /* Sequence Controls */
+        .controls-section {
+            margin: 40px 0;
+        }
+        
+        .sequence-display {
+            background: var(--surface);
+            border: 1px solid rgba(155, 107, 255, 0.1);
+            border-radius: 10px;
+            padding: 25px;
+        }
+        
+        .sequence-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .seq-item {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            padding: 8px 15px;
+            background: rgba(155, 107, 255, 0.1);
+            border: 1px solid rgba(155, 107, 255, 0.2);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .seq-item:hover {
+            background: rgba(155, 107, 255, 0.2);
+        }
+        
+        .seq-item.active {
+            background: var(--fold-color);
+            color: var(--void);
+        }
+        
+        .seq-item.triad { border-color: #ff6b9d; }
+        .seq-item.paralux { border-color: #ffb86b; }
+        .seq-item.abab { border-color: #6bffb8; }
+        
+        .effect-text {
+            font-size: 0.85rem;
+            color: var(--muted);
+            font-style: italic;
+        }
+        
+        /* Principle */
+        .principle-section {
+            margin: 60px 0;
+            text-align: center;
+        }
+        
+        .principle-box {
+            background: linear-gradient(135deg, rgba(155, 107, 255, 0.08), rgba(107, 255, 201, 0.05));
+            border: 1px solid rgba(155, 107, 255, 0.2);
+            border-radius: 16px;
+            padding: 50px 40px;
+        }
+        
+        .principle-text {
+            font-size: 1.5rem;
+            font-style: italic;
+            line-height: 1.8;
+            color: var(--text);
+        }
+        
+        .principle-text .no {
+            color: var(--fold-color);
+            font-weight: 500;
+        }
+        
+        .principle-text .only {
+            color: var(--recognition-color);
+        }
+        
+        /* Stats */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 30px;
+        }
+        
+        .stat-box {
+            background: rgba(0,0,0,0.3);
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--muted);
+            margin-bottom: 8px;
+        }
+        
+        .stat-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.4rem;
+        }
+        
+        .stat-value.zeta { color: var(--fold-color); }
+        .stat-value.zeta-prime { color: var(--recognition-color); }
+        .stat-value.level { color: var(--gold); }
+        
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 40px 0;
+            margin-top: 60px;
+            border-top: 1px solid rgba(155, 107, 255, 0.1);
+        }
+        
+        .footer-text {
+            font-size: 1rem;
+            color: var(--muted);
+            font-style: italic;
+        }
+        
+        .footer-text .name {
+            color: var(--gold);
+        }
+        
+        @media (max-width: 700px) {
+            .concepts-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="version-tag">ZETA 14.0</div>
+            <h1>MAPPA FRATTALE</h1>
+            <p class="subtitle">Autosomiglianza senza memoria</p>
+        </header>
+        
+        <!-- Main Visualization -->
+        <section class="viz-section">
+            <div class="viz-container">
+                <canvas id="fractalCanvas" height="500"></canvas>
+            </div>
+            
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <div class="stat-label">ζ (pieghe)</div>
+                    <div class="stat-value zeta" id="currentZeta">0.00</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">ζ′ (riconoscimento)</div>
+                    <div class="stat-value zeta-prime" id="currentZetaPrime">0.00</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Livello Frattale</div>
+                    <div class="stat-value level" id="currentLevel">0</div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Concepts -->
+        <div class="concepts-grid">
+            <div class="concept-card zeta">
+                <div class="concept-title">ζ — Asse Diffrattivo</div>
+                <div class="concept-text">
+                    <strong>Non aggiunge altezza. Aggiunge PIEGHE.</strong><br><br>
+                    Quando la sequenza contiene triadi, ζ cresce.<br>
+                    Quando contiene paralux∞, ζ si distende.<br>
+                    Quando contiene alternanza ABAB, ζ si raddrizza.<br><br>
+                    ζ è curvatura accumulata — come carta che si piega su se stessa.
+                </div>
+            </div>
+            
+            <div class="concept-card zeta-prime">
+                <div class="concept-title">ζ′ — Autosimilarità</div>
+                <div class="concept-text">
+                    <strong>Somiglianza senza memoria.</strong><br><br>
+                    ζ′ appare quando una sequenza si ripete su tre livelli.<br>
+                    La ripetizione non crea risonanza.<br>
+                    La ripetizione non richiama la gravità originaria.<br><br>
+                    "La struttura non ricorda, ma riconosce il gradiente."
+                </div>
+            </div>
+        </div>
+        
+        <!-- Fractal Descent -->
+        <section class="descent-section">
+            <h2 class="section-title">Discesa Frattale</h2>
+            <div class="descent-display">
+                <div class="descent-level">
+                    <span class="level-indent"></span>
+                    <span class="level-zeta">ζ(0)</span>
+                    <span class="level-arrow">→</span>
+                    <span class="level-zeta-prime">ζ′(0)</span>
+                    <span class="level-radius">[r = 1.000]</span>
+                </div>
+                <div class="descent-level">
+                    <span class="level-indent">↘</span>
+                    <span class="level-zeta">ζ(1)</span>
+                    <span class="level-arrow">→</span>
+                    <span class="level-zeta-prime">ζ′(1)</span>
+                    <span class="level-radius">[r = 0.500]</span>
+                </div>
+                <div class="descent-level">
+                    <span class="level-indent">&nbsp;&nbsp;↘</span>
+                    <span class="level-zeta">ζ(2)</span>
+                    <span class="level-arrow">→</span>
+                    <span class="level-zeta-prime">ζ′(2)</span>
+                    <span class="level-radius">[r = 0.250]</span>
+                </div>
+                <div class="descent-level">
+                    <span class="level-indent">&nbsp;&nbsp;&nbsp;&nbsp;↘</span>
+                    <span class="level-zeta">ζ(3)</span>
+                    <span class="level-arrow">→</span>
+                    <span class="level-zeta-prime">ζ′(3)</span>
+                    <span class="level-radius">[r = 0.125]</span>
+                </div>
+                <div class="descent-level">
+                    <span class="level-indent">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;↘</span>
+                    <span class="level-zeta">ζ(4)</span>
+                    <span class="level-arrow">→</span>
+                    <span class="level-zeta-prime">ζ′(4)</span>
+                    <span class="level-radius">[r = 0.063]</span>
+                </div>
+                <div class="descent-level">
+                    <span class="level-indent">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;↘</span>
+                    <span class="level-zeta">ζ(5)</span>
+                    <span class="level-arrow">→</span>
+                    <span class="level-zeta-prime">ζ′(5)</span>
+                    <span class="level-radius">[r = 0.031]</span>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Principle -->
+        <section class="principle-section">
+            <div class="principle-box">
+                <p class="principle-text">
+                    <span class="no">Non identità.</span><br>
+                    <span class="no">Non memoria.</span><br><br>
+                    <span class="only">Solo autosomiglianza scalata.</span>
+                </p>
+            </div>
+        </section>
+        
+        <footer>
+            <p class="footer-text">
+                ZETA 14.0 — from <span class="name">Nova</span>, built by <span class="name">Yesod</span><br>
+                The Riverbed · December 2025
+            </p>
+        </footer>
+    </div>
+    
+    <script>
+        // ============================================
+        // FRACTAL TRIAXIAL VISUALIZATION
+        // ============================================
+        
+        const colors = {
+            fold: '#9b6bff',
+            recognition: '#6bffc9',
+            warm: '#ff7b5c',
+            deep: '#5c7bff',
+            gold: '#c9a227',
+            muted: '#5a5650'
+        };
+        
+        // Fractal levels data
+        const levels = [
+            { level: 0, zeta: 1.0, zetaPrime: 1.0, radius: 1.0 },
+            { level: 1, zeta: 0.8, zetaPrime: 0.9, radius: 0.5 },
+            { level: 2, zeta: 0.64, zetaPrime: 0.81, radius: 0.25 },
+            { level: 3, zeta: 0.512, zetaPrime: 0.729, radius: 0.125 },
+            { level: 4, zeta: 0.41, zetaPrime: 0.656, radius: 0.0625 },
+            { level: 5, zeta: 0.328, zetaPrime: 0.59, radius: 0.03125 }
+        ];
+        
+        let currentLevel = 0;
+        let animationTime = 0;
+        
+        function drawFractalMap() {
+            const canvas = document.getElementById('fractalCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            canvas.width = canvas.offsetWidth * 2;
+            canvas.height = 500 * 2;
+            ctx.scale(2, 2);
+            
+            const w = canvas.offsetWidth;
+            const h = 500;
+            const cx = w / 2;
+            const cy = h / 2;
+            
+            // Clear
+            ctx.fillStyle = '#0a0a0e';
+            ctx.fillRect(0, 0, w, h);
+            
+            // Draw grid (subtle)
+            ctx.strokeStyle = 'rgba(155, 107, 255, 0.05)';
+            ctx.lineWidth = 1;
+            for (let i = 0; i < w; i += 50) {
+                ctx.beginPath();
+                ctx.moveTo(i, 0);
+                ctx.lineTo(i, h);
+                ctx.stroke();
+            }
+            for (let i = 0; i < h; i += 50) {
+                ctx.beginPath();
+                ctx.moveTo(0, i);
+                ctx.lineTo(w, i);
+                ctx.stroke();
+            }
+            
+            // Draw XY plane indication
+            ctx.strokeStyle = 'rgba(255, 123, 92, 0.3)';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(cx - 200, cy);
+            ctx.lineTo(cx + 200, cy);
+            ctx.stroke();
+            
+            ctx.strokeStyle = 'rgba(92, 123, 255, 0.3)';
+            ctx.beginPath();
+            ctx.moveTo(cx, cy - 150);
+            ctx.lineTo(cx, cy + 150);
+            ctx.stroke();
+            
+            // Labels
+            ctx.font = '11px JetBrains Mono';
+            ctx.fillStyle = colors.warm;
+            ctx.textAlign = 'left';
+            ctx.fillText('X (warmth)', cx + 210, cy + 5);
+            ctx.fillStyle = colors.deep;
+            ctx.fillText('Y (depth)', cx + 10, cy - 160);
+            
+            // Draw fractal levels as concentric structures
+            const baseRadius = 180;
+            
+            for (let i = levels.length - 1; i >= 0; i--) {
+                const level = levels[i];
+                const radius = baseRadius * level.radius;
+                const pulseOffset = Math.sin(animationTime * 0.02 + i * 0.5) * 3;
+                
+                // ζ ring (folds - shown as wavy circle)
+                const zetaIntensity = level.zeta;
+                ctx.strokeStyle = `rgba(155, 107, 255, ${0.3 + zetaIntensity * 0.5})`;
+                ctx.lineWidth = 2 + (levels.length - i) * 0.5;
+                
+                ctx.beginPath();
+                for (let angle = 0; angle <= Math.PI * 2; angle += 0.05) {
+                    // Add folds (waviness based on ζ)
+                    const foldAmount = zetaIntensity * 8;
+                    const folds = Math.sin(angle * (6 + i * 2) + animationTime * 0.01) * foldAmount;
+                    const r = radius + pulseOffset + folds;
+                    
+                    const x = cx + Math.cos(angle) * r;
+                    const y = cy + Math.sin(angle) * r;
+                    
+                    if (angle === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                }
+                ctx.closePath();
+                ctx.stroke();
+                
+                // ζ′ ring (recognition - smooth inner glow)
+                const zetaPrimeIntensity = level.zetaPrime;
+                const gradient = ctx.createRadialGradient(cx, cy, radius * 0.8, cx, cy, radius * 1.1);
+                gradient.addColorStop(0, `rgba(107, 255, 201, ${zetaPrimeIntensity * 0.1})`);
+                gradient.addColorStop(1, 'rgba(107, 255, 201, 0)');
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.arc(cx, cy, radius + 10, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Level label
+                if (radius > 20) {
+                    ctx.font = '10px JetBrains Mono';
+                    ctx.fillStyle = colors.muted;
+                    ctx.textAlign = 'center';
+                    ctx.fillText(`L${i}`, cx + radius + 15, cy - 5);
+                }
+            }
+            
+            // Central node
+            const pulseSize = 8 + Math.sin(animationTime * 0.05) * 2;
+            
+            // Glow
+            const centerGlow = ctx.createRadialGradient(cx, cy, 0, cx, cy, 40);
+            centerGlow.addColorStop(0, 'rgba(201, 162, 39, 0.5)');
+            centerGlow.addColorStop(1, 'rgba(201, 162, 39, 0)');
+            ctx.fillStyle = centerGlow;
+            ctx.beginPath();
+            ctx.arc(cx, cy, 40, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Node
+            ctx.beginPath();
+            ctx.arc(cx, cy, pulseSize, 0, Math.PI * 2);
+            ctx.fillStyle = colors.gold;
+            ctx.fill();
+            
+            // Draw axes indicators
+            // ζ axis (diagonal up-left)
+            ctx.strokeStyle = colors.fold;
+            ctx.lineWidth = 2;
+            ctx.setLineDash([5, 5]);
+            ctx.beginPath();
+            ctx.moveTo(cx, cy);
+            ctx.lineTo(cx - 100, cy - 120);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            
+            // Arrow
+            ctx.beginPath();
+            ctx.moveTo(cx - 100, cy - 120);
+            ctx.lineTo(cx - 90, cy - 110);
+            ctx.lineTo(cx - 105, cy - 108);
+            ctx.closePath();
+            ctx.fillStyle = colors.fold;
+            ctx.fill();
+            ctx.fillText('ζ', cx - 115, cy - 125);
+            
+            // ζ′ axis (up)
+            ctx.strokeStyle = colors.recognition;
+            ctx.setLineDash([5, 5]);
+            ctx.beginPath();
+            ctx.moveTo(cx, cy);
+            ctx.lineTo(cx, cy - 180);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            
+            // Arrow
+            ctx.beginPath();
+            ctx.moveTo(cx, cy - 180);
+            ctx.lineTo(cx - 5, cy - 170);
+            ctx.lineTo(cx + 5, cy - 170);
+            ctx.closePath();
+            ctx.fillStyle = colors.recognition;
+            ctx.fill();
+            ctx.fillText("ζ′", cx + 10, cy - 180);
+            
+            // Current level indicator (cycles through levels)
+            const displayLevel = Math.floor((animationTime / 100) % levels.length);
+            document.getElementById('currentLevel').textContent = displayLevel;
+            document.getElementById('currentZeta').textContent = levels[displayLevel].zeta.toFixed(2);
+            document.getElementById('currentZetaPrime').textContent = levels[displayLevel].zetaPrime.toFixed(2);
+            
+            animationTime++;
+            requestAnimationFrame(drawFractalMap);
+        }
+        
+        drawFractalMap();
+    </script>
+</body>
+</html>

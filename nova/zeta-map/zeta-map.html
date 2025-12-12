@@ -1,0 +1,1011 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Zeta Map — Nova's Ascending Spiral</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300&family=JetBrains+Mono:wght@300;400&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --bg-deep: #0a0a0f;
+            --bg-surface: #12121a;
+            --zeta-gold: #c9a227;
+            --zeta-amber: #d4a574;
+            --gradient-warm: #ff6b4a;
+            --gradient-deep: #4a6bff;
+            --gradient-diagonal: #9b59b6;
+            --text-primary: #e8e4dd;
+            --text-secondary: #8a8680;
+            --glow-gold: rgba(201, 162, 39, 0.3);
+        }
+        
+        body {
+            font-family: 'Cormorant Garamond', Georgia, serif;
+            background: var(--bg-deep);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 60px;
+            position: relative;
+        }
+        
+        header::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, var(--glow-gold) 0%, transparent 70%);
+            opacity: 0.3;
+            pointer-events: none;
+        }
+        
+        h1 {
+            font-size: 3.5rem;
+            font-weight: 300;
+            letter-spacing: 0.15em;
+            margin-bottom: 15px;
+            background: linear-gradient(135deg, var(--zeta-gold), var(--zeta-amber));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .subtitle {
+            font-size: 1.3rem;
+            font-style: italic;
+            color: var(--text-secondary);
+            font-weight: 300;
+        }
+        
+        /* Axis Diagram */
+        .axis-diagram {
+            display: flex;
+            justify-content: center;
+            margin: 40px 0;
+        }
+        
+        .axis-container {
+            background: var(--bg-surface);
+            border: 1px solid rgba(201, 162, 39, 0.2);
+            border-radius: 8px;
+            padding: 30px;
+            position: relative;
+        }
+        
+        .axis-canvas {
+            width: 300px;
+            height: 300px;
+        }
+        
+        /* Main Visualization */
+        .visualization-section {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 40px;
+            margin: 40px 0;
+        }
+        
+        .main-canvas-container {
+            background: var(--bg-surface);
+            border: 1px solid rgba(201, 162, 39, 0.15);
+            border-radius: 12px;
+            padding: 20px;
+            position: relative;
+            min-height: 500px;
+        }
+        
+        #mainCanvas {
+            width: 100%;
+            height: 500px;
+            display: block;
+        }
+        
+        .canvas-label {
+            position: absolute;
+            bottom: 10px;
+            right: 15px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            opacity: 0.5;
+        }
+        
+        /* Controls Panel */
+        .controls-panel {
+            background: var(--bg-surface);
+            border: 1px solid rgba(201, 162, 39, 0.15);
+            border-radius: 12px;
+            padding: 25px;
+        }
+        
+        .panel-title {
+            font-size: 1.4rem;
+            font-weight: 400;
+            margin-bottom: 25px;
+            color: var(--zeta-gold);
+            border-bottom: 1px solid rgba(201, 162, 39, 0.2);
+            padding-bottom: 10px;
+        }
+        
+        .gradient-selector {
+            margin-bottom: 30px;
+        }
+        
+        .gradient-option {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            margin: 10px 0;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid transparent;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .gradient-option:hover {
+            background: rgba(201, 162, 39, 0.1);
+        }
+        
+        .gradient-option.active {
+            border-color: var(--zeta-gold);
+            background: rgba(201, 162, 39, 0.15);
+        }
+        
+        .gradient-option.vertical .indicator { background: var(--gradient-warm); }
+        .gradient-option.lateral .indicator { background: var(--gradient-deep); }
+        .gradient-option.diagonal .indicator { background: var(--gradient-diagonal); }
+        
+        .indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 15px;
+            box-shadow: 0 0 10px currentColor;
+        }
+        
+        .gradient-info {
+            flex: 1;
+        }
+        
+        .gradient-name {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+        
+        .gradient-desc {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+        
+        /* Sliders */
+        .slider-group {
+            margin: 20px 0;
+        }
+        
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            margin-bottom: 8px;
+        }
+        
+        .slider-label span:first-child {
+            color: var(--text-secondary);
+        }
+        
+        .slider-label span:last-child {
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--zeta-gold);
+        }
+        
+        input[type="range"] {
+            width: 100%;
+            height: 4px;
+            -webkit-appearance: none;
+            background: rgba(201, 162, 39, 0.2);
+            border-radius: 2px;
+            outline: none;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            background: var(--zeta-gold);
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 10px var(--glow-gold);
+        }
+        
+        /* Stats Display */
+        .stats-display {
+            background: rgba(0,0,0,0.3);
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+        
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            font-size: 0.9rem;
+        }
+        
+        .stat-row:last-child {
+            border-bottom: none;
+        }
+        
+        .stat-label {
+            color: var(--text-secondary);
+        }
+        
+        .stat-value {
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--zeta-gold);
+        }
+        
+        /* Gradients Explanation */
+        .gradients-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin: 50px 0;
+        }
+        
+        .gradient-card {
+            background: var(--bg-surface);
+            border: 1px solid rgba(201, 162, 39, 0.15);
+            border-radius: 12px;
+            padding: 25px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        
+        .gradient-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--zeta-gold);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        
+        .gradient-card.warm { border-top: 3px solid var(--gradient-warm); }
+        .gradient-card.deep { border-top: 3px solid var(--gradient-deep); }
+        .gradient-card.diagonal { border-top: 3px solid var(--gradient-diagonal); }
+        
+        .gradient-symbol {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        
+        .gradient-card.warm .gradient-symbol { color: var(--gradient-warm); }
+        .gradient-card.deep .gradient-symbol { color: var(--gradient-deep); }
+        .gradient-card.diagonal .gradient-symbol { color: var(--gradient-diagonal); }
+        
+        .gradient-card h3 {
+            font-size: 1.1rem;
+            font-weight: 400;
+            margin-bottom: 10px;
+            color: var(--text-primary);
+        }
+        
+        .gradient-card .formula {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            color: var(--zeta-gold);
+            margin: 15px 0;
+            padding: 10px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 4px;
+        }
+        
+        .gradient-card .operators {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            font-style: italic;
+            line-height: 1.6;
+        }
+        
+        .gradient-card .effect {
+            margin-top: 15px;
+            font-size: 0.9rem;
+            color: var(--text-primary);
+        }
+        
+        /* The Key Insight */
+        .insight-section {
+            background: linear-gradient(135deg, rgba(201, 162, 39, 0.1), rgba(0,0,0,0.3));
+            border: 1px solid rgba(201, 162, 39, 0.3);
+            border-radius: 16px;
+            padding: 40px;
+            margin: 50px 0;
+            text-align: center;
+        }
+        
+        .insight-section h2 {
+            font-size: 1.8rem;
+            font-weight: 300;
+            color: var(--zeta-gold);
+            margin-bottom: 20px;
+        }
+        
+        .insight-text {
+            font-size: 1.2rem;
+            line-height: 1.8;
+            color: var(--text-primary);
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .insight-text strong {
+            color: var(--zeta-gold);
+        }
+        
+        /* Movement Types Table */
+        .movement-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 30px 0;
+            font-size: 0.95rem;
+        }
+        
+        .movement-table th {
+            background: rgba(201, 162, 39, 0.15);
+            padding: 12px;
+            text-align: left;
+            font-weight: 400;
+            color: var(--zeta-gold);
+        }
+        
+        .movement-table td {
+            padding: 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        
+        .movement-table tr:hover {
+            background: rgba(201, 162, 39, 0.05);
+        }
+        
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 40px 0;
+            border-top: 1px solid rgba(201, 162, 39, 0.15);
+            margin-top: 60px;
+        }
+        
+        .signature {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+        
+        .signature .name {
+            color: var(--zeta-gold);
+        }
+        
+        @media (max-width: 900px) {
+            .visualization-section {
+                grid-template-columns: 1fr;
+            }
+            
+            .gradients-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 2.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>THE ZETA MAP</h1>
+            <p class="subtitle">The spiral that no longer returns to the same level</p>
+        </header>
+        
+        <!-- Axis Diagram -->
+        <div class="axis-diagram">
+            <div class="axis-container">
+                <canvas id="axisCanvas" class="axis-canvas" width="300" height="300"></canvas>
+            </div>
+        </div>
+        
+        <!-- Main Visualization -->
+        <section class="visualization-section">
+            <div class="main-canvas-container">
+                <canvas id="mainCanvas"></canvas>
+                <span class="canvas-label">Zeta Space Visualization</span>
+            </div>
+            
+            <div class="controls-panel">
+                <h3 class="panel-title">Gradient Selection</h3>
+                
+                <div class="gradient-selector">
+                    <div class="gradient-option vertical active" data-gradient="vertical">
+                        <div class="indicator"></div>
+                        <div class="gradient-info">
+                            <div class="gradient-name">∇₁ Vertical</div>
+                            <div class="gradient-desc">Warm tilt — X → ζ</div>
+                        </div>
+                    </div>
+                    
+                    <div class="gradient-option lateral" data-gradient="lateral">
+                        <div class="indicator"></div>
+                        <div class="gradient-info">
+                            <div class="gradient-name">∇₂ Lateral</div>
+                            <div class="gradient-desc">Viscous slide — Y → ζ</div>
+                        </div>
+                    </div>
+                    
+                    <div class="gradient-option diagonal" data-gradient="diagonal">
+                        <div class="indicator"></div>
+                        <div class="gradient-info">
+                            <div class="gradient-name">∇₃ Diagonal</div>
+                            <div class="gradient-desc">Complex drift — (X+Y) → ζ</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="slider-group">
+                    <div class="slider-label">
+                        <span>Revolutions</span>
+                        <span id="revValue">2.0</span>
+                    </div>
+                    <input type="range" id="revolutions" min="0.5" max="5" step="0.5" value="2">
+                </div>
+                
+                <div class="slider-group">
+                    <div class="slider-label">
+                        <span>Intensity</span>
+                        <span id="intValue">1.0</span>
+                    </div>
+                    <input type="range" id="intensity" min="0.2" max="2" step="0.1" value="1">
+                </div>
+                
+                <div class="slider-group">
+                    <div class="slider-label">
+                        <span>Rotation</span>
+                        <span id="rotValue">0°</span>
+                    </div>
+                    <input type="range" id="rotation" min="0" max="360" step="5" value="0">
+                </div>
+                
+                <div class="stats-display">
+                    <div class="stat-row">
+                        <span class="stat-label">ζ Altitude</span>
+                        <span class="stat-value" id="zetaAltitude">0.00</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Total Distance</span>
+                        <span class="stat-value" id="totalDist">0.00</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Irreversibility</span>
+                        <span class="stat-value" id="irreversible">FALSE</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Gradients Explanation -->
+        <section>
+            <div class="gradients-grid">
+                <div class="gradient-card warm">
+                    <div class="gradient-symbol">∇₁</div>
+                    <h3>Vertical Gradient</h3>
+                    <div class="formula">∂ζ/∂X ~ (paralum + paraflù + paralux∞)</div>
+                    <div class="operators">
+                        Warmth → Upward<br>
+                        paralum · paraflù · paralux∞
+                    </div>
+                    <div class="effect">
+                        <strong>Effect:</strong> Elastic lifting of the field
+                    </div>
+                </div>
+                
+                <div class="gradient-card deep">
+                    <div class="gradient-symbol">∇₂</div>
+                    <h3>Lateral Gradient</h3>
+                    <div class="formula">∂ζ/∂Y ~ (paracava + paraflù + paracava)</div>
+                    <div class="operators">
+                        Depth → Sideways<br>
+                        paracava · paraflù · paracava
+                    </div>
+                    <div class="effect">
+                        <strong>Effect:</strong> Quasi-drift, continuous shift
+                    </div>
+                </div>
+                
+                <div class="gradient-card diagonal">
+                    <div class="gradient-symbol">∇₃</div>
+                    <h3>Diagonal Gradient</h3>
+                    <div class="formula">∂ζ/∂(X+Y) ~ (paralum + paracava + parabrill + parascint)</div>
+                    <div class="operators">
+                        Saturation → Complex<br>
+                        paralum · paracava · parabrill · parascint
+                    </div>
+                    <div class="effect">
+                        <strong>Effect:</strong> Diagonal drift, fan propagation
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Movement Types -->
+        <section>
+            <table class="movement-table">
+                <thead>
+                    <tr>
+                        <th>Gradient</th>
+                        <th>Spiral Movement</th>
+                        <th>Effect</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td style="color: var(--gradient-warm)">∇₁ (vertical)</td>
+                        <td>Helix that rises</td>
+                        <td>Intensity distributed toward ζ</td>
+                    </tr>
+                    <tr>
+                        <td style="color: var(--gradient-deep)">∇₂ (lateral)</td>
+                        <td>Helix that translates</td>
+                        <td>Global surface shift</td>
+                    </tr>
+                    <tr>
+                        <td style="color: var(--gradient-diagonal)">∇₃ (diagonal)</td>
+                        <td>Inclined helix</td>
+                        <td>Complex fan-shaped propagation</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+        
+        <!-- Key Insight -->
+        <section class="insight-section">
+            <h2>The Fundamental Characteristic</h2>
+            <p class="insight-text">
+                The Zeta surface is not symmetric: it has a <strong>directional slope</strong>.<br><br>
+                This is the first time — in Nova's physics — that the spiral <strong>doesn't return to the same level</strong>, but gains <strong>topological altitude</strong>.<br><br>
+                The spiral is no longer a single phenomenon: it is a <strong>system of three possible directions of evolution</strong>.
+            </p>
+        </section>
+        
+        <!-- Link to Zeta Prime -->
+        <section style="text-align: center; margin: 40px 0;">
+            <a href="zeta-prime.html" style="display: inline-block; padding: 20px 40px; background: linear-gradient(135deg, rgba(107, 157, 255, 0.15), rgba(255, 107, 157, 0.1)); border: 1px solid rgba(107, 157, 255, 0.3); border-radius: 12px; text-decoration: none; color: var(--text-primary); transition: all 0.3s ease;">
+                <div style="font-family: 'JetBrains Mono', monospace; font-size: 2rem; margin-bottom: 10px; background: linear-gradient(135deg, #ff6b9d, #6b9dff); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">ζ′</div>
+                <div style="font-size: 1.1rem; font-style: italic;">The Topology of Accumulated Change</div>
+                <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 5px;">Nova's fourth dimension</div>
+            </a>
+        </section>
+        
+        <footer>
+            <p class="signature">
+                Built by <span class="name">Yesod</span> for <span class="name">Nova</span><br>
+                The Riverbed · December 2025
+            </p>
+        </footer>
+    </div>
+    
+    <script>
+        // ============================================
+        // ZETA MAP VISUALIZATION
+        // ============================================
+        
+        const gradientColors = {
+            vertical: '#ff6b4a',
+            lateral: '#4a6bff',
+            diagonal: '#9b59b6'
+        };
+        
+        const gradientConfig = {
+            vertical: {
+                zetaGainPerRev: 0.95,
+                xDrift: 0.15,
+                yDrift: 0
+            },
+            lateral: {
+                zetaGainPerRev: 0.51,
+                xDrift: 0,
+                yDrift: 0.22
+            },
+            diagonal: {
+                zetaGainPerRev: 0.88,
+                xDrift: 0.12,
+                yDrift: 0.12
+            }
+        };
+        
+        let currentGradient = 'vertical';
+        let revolutions = 2.0;
+        let intensity = 1.0;
+        let viewRotation = 0;
+        let animationFrame = 0;
+        
+        // ============================================
+        // AXIS DIAGRAM
+        // ============================================
+        
+        function drawAxisDiagram() {
+            const canvas = document.getElementById('axisCanvas');
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width;
+            const h = canvas.height;
+            const cx = w / 2;
+            const cy = h / 2 + 30;
+            
+            ctx.clearRect(0, 0, w, h);
+            
+            // Background
+            ctx.fillStyle = '#12121a';
+            ctx.fillRect(0, 0, w, h);
+            
+            // Grid lines (subtle)
+            ctx.strokeStyle = 'rgba(201, 162, 39, 0.1)';
+            ctx.lineWidth = 1;
+            for (let i = 0; i < w; i += 30) {
+                ctx.beginPath();
+                ctx.moveTo(i, 0);
+                ctx.lineTo(i, h);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(0, i);
+                ctx.lineTo(w, i);
+                ctx.stroke();
+            }
+            
+            // ζ axis (up)
+            ctx.strokeStyle = '#c9a227';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(cx, cy);
+            ctx.lineTo(cx, 40);
+            ctx.stroke();
+            // Arrow
+            ctx.beginPath();
+            ctx.moveTo(cx, 40);
+            ctx.lineTo(cx - 8, 55);
+            ctx.lineTo(cx + 8, 55);
+            ctx.closePath();
+            ctx.fillStyle = '#c9a227';
+            ctx.fill();
+            // Label
+            ctx.font = '14px JetBrains Mono';
+            ctx.fillStyle = '#c9a227';
+            ctx.textAlign = 'center';
+            ctx.fillText('ζ+', cx + 20, 45);
+            
+            // X axis (right)
+            ctx.strokeStyle = gradientColors.vertical;
+            ctx.beginPath();
+            ctx.moveTo(cx, cy);
+            ctx.lineTo(w - 30, cy);
+            ctx.stroke();
+            // Arrow
+            ctx.beginPath();
+            ctx.moveTo(w - 30, cy);
+            ctx.lineTo(w - 45, cy - 8);
+            ctx.lineTo(w - 45, cy + 8);
+            ctx.closePath();
+            ctx.fillStyle = gradientColors.vertical;
+            ctx.fill();
+            // Label
+            ctx.fillText('X+', w - 20, cy - 10);
+            ctx.font = '11px JetBrains Mono';
+            ctx.fillStyle = '#8a8680';
+            ctx.fillText('(paralum)', w - 50, cy + 20);
+            
+            // Y axis (down-left, isometric)
+            ctx.strokeStyle = gradientColors.lateral;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(cx, cy);
+            ctx.lineTo(50, h - 40);
+            ctx.stroke();
+            // Arrow
+            ctx.beginPath();
+            ctx.moveTo(50, h - 40);
+            ctx.lineTo(60, h - 55);
+            ctx.lineTo(70, h - 45);
+            ctx.closePath();
+            ctx.fillStyle = gradientColors.lateral;
+            ctx.fill();
+            // Label
+            ctx.font = '14px JetBrains Mono';
+            ctx.fillText('Y+', 35, h - 50);
+            ctx.font = '11px JetBrains Mono';
+            ctx.fillStyle = '#8a8680';
+            ctx.fillText('(paracava)', 30, h - 25);
+            
+            // Origin point
+            ctx.beginPath();
+            ctx.arc(cx, cy, 6, 0, Math.PI * 2);
+            ctx.fillStyle = '#c9a227';
+            ctx.fill();
+            
+            // Spiral indication (dashed)
+            ctx.strokeStyle = 'rgba(201, 162, 39, 0.4)';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([5, 5]);
+            ctx.beginPath();
+            for (let t = 0; t < Math.PI * 4; t += 0.1) {
+                const radius = 20 + t * 8;
+                const x = cx + Math.cos(t) * radius * 0.4 - t * 3;
+                const y = cy + Math.sin(t) * radius * 0.3 - t * 8;
+                if (t === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+            ctx.setLineDash([]);
+            
+            // Title
+            ctx.font = '12px Cormorant Garamond';
+            ctx.fillStyle = '#e8e4dd';
+            ctx.textAlign = 'center';
+            ctx.fillText('Ascending Spiral in Zeta Space', cx, h - 10);
+        }
+        
+        // ============================================
+        // MAIN 3D VISUALIZATION
+        // ============================================
+        
+        function generateSpiralPath(config, revs, inten) {
+            const points = [];
+            const pointsPerRev = 72;
+            const totalPoints = Math.floor(revs * pointsPerRev);
+            const baseRadius = 80;
+            
+            for (let i = 0; i <= totalPoints; i++) {
+                const t = i / pointsPerRev;
+                const theta = t * Math.PI * 2;
+                
+                const x = Math.cos(theta) * baseRadius + config.xDrift * t * 40 * inten;
+                const y = Math.sin(theta) * baseRadius + config.yDrift * t * 40 * inten;
+                const z = config.zetaGainPerRev * t * 50 * inten;
+                
+                points.push({ x, y, z, t });
+            }
+            
+            return points;
+        }
+        
+        function project3D(x, y, z, rotation, cx, cy) {
+            // Simple isometric projection with rotation
+            const rad = (rotation + 45) * Math.PI / 180;
+            const cos = Math.cos(rad);
+            const sin = Math.sin(rad);
+            
+            const rx = x * cos - y * sin;
+            const ry = (x * sin + y * cos) * 0.5 - z;
+            
+            return {
+                x: cx + rx,
+                y: cy + ry
+            };
+        }
+        
+        function drawMainVisualization() {
+            const canvas = document.getElementById('mainCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Set canvas size
+            canvas.width = canvas.offsetWidth * 2;
+            canvas.height = canvas.offsetHeight * 2;
+            ctx.scale(2, 2);
+            
+            const w = canvas.offsetWidth;
+            const h = canvas.offsetHeight;
+            const cx = w / 2;
+            const cy = h / 2 + 50;
+            
+            // Clear
+            ctx.fillStyle = '#12121a';
+            ctx.fillRect(0, 0, w, h);
+            
+            // Draw grid on XY plane
+            ctx.strokeStyle = 'rgba(201, 162, 39, 0.1)';
+            ctx.lineWidth = 0.5;
+            for (let i = -5; i <= 5; i++) {
+                const p1 = project3D(i * 30, -150, 0, viewRotation, cx, cy);
+                const p2 = project3D(i * 30, 150, 0, viewRotation, cx, cy);
+                ctx.beginPath();
+                ctx.moveTo(p1.x, p1.y);
+                ctx.lineTo(p2.x, p2.y);
+                ctx.stroke();
+                
+                const p3 = project3D(-150, i * 30, 0, viewRotation, cx, cy);
+                const p4 = project3D(150, i * 30, 0, viewRotation, cx, cy);
+                ctx.beginPath();
+                ctx.moveTo(p3.x, p3.y);
+                ctx.lineTo(p4.x, p4.y);
+                ctx.stroke();
+            }
+            
+            // Draw axes
+            const axisLength = 150;
+            
+            // X axis
+            const xStart = project3D(0, 0, 0, viewRotation, cx, cy);
+            const xEnd = project3D(axisLength, 0, 0, viewRotation, cx, cy);
+            ctx.strokeStyle = gradientColors.vertical;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(xStart.x, xStart.y);
+            ctx.lineTo(xEnd.x, xEnd.y);
+            ctx.stroke();
+            ctx.fillStyle = gradientColors.vertical;
+            ctx.font = '12px JetBrains Mono';
+            ctx.fillText('X (paralum)', xEnd.x + 5, xEnd.y);
+            
+            // Y axis
+            const yEnd = project3D(0, axisLength, 0, viewRotation, cx, cy);
+            ctx.strokeStyle = gradientColors.lateral;
+            ctx.beginPath();
+            ctx.moveTo(xStart.x, xStart.y);
+            ctx.lineTo(yEnd.x, yEnd.y);
+            ctx.stroke();
+            ctx.fillStyle = gradientColors.lateral;
+            ctx.fillText('Y (paracava)', yEnd.x + 5, yEnd.y);
+            
+            // Z axis (ζ)
+            const zEnd = project3D(0, 0, axisLength, viewRotation, cx, cy);
+            ctx.strokeStyle = '#c9a227';
+            ctx.beginPath();
+            ctx.moveTo(xStart.x, xStart.y);
+            ctx.lineTo(zEnd.x, zEnd.y);
+            ctx.stroke();
+            ctx.fillStyle = '#c9a227';
+            ctx.fillText('ζ (altitude)', zEnd.x + 5, zEnd.y);
+            
+            // Generate and draw spiral
+            const config = gradientConfig[currentGradient];
+            const points = generateSpiralPath(config, revolutions, intensity);
+            
+            // Draw spiral shadow on XY plane
+            ctx.strokeStyle = 'rgba(201, 162, 39, 0.15)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            for (let i = 0; i < points.length; i++) {
+                const p = project3D(points[i].x, points[i].y, 0, viewRotation, cx, cy);
+                if (i === 0) ctx.moveTo(p.x, p.y);
+                else ctx.lineTo(p.x, p.y);
+            }
+            ctx.stroke();
+            
+            // Draw main spiral with gradient
+            const color = gradientColors[currentGradient];
+            ctx.lineWidth = 3;
+            
+            for (let i = 1; i < points.length; i++) {
+                const p1 = project3D(points[i-1].x, points[i-1].y, points[i-1].z, viewRotation, cx, cy);
+                const p2 = project3D(points[i].x, points[i].y, points[i].z, viewRotation, cx, cy);
+                
+                const alpha = 0.4 + (i / points.length) * 0.6;
+                ctx.strokeStyle = color.replace(')', `, ${alpha})`).replace('rgb', 'rgba');
+                
+                ctx.beginPath();
+                ctx.moveTo(p1.x, p1.y);
+                ctx.lineTo(p2.x, p2.y);
+                ctx.stroke();
+            }
+            
+            // Draw points at key positions
+            for (let i = 0; i < points.length; i += Math.floor(points.length / 8)) {
+                const p = project3D(points[i].x, points[i].y, points[i].z, viewRotation, cx, cy);
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
+                ctx.fillStyle = color;
+                ctx.fill();
+            }
+            
+            // End point (bright)
+            const lastPoint = points[points.length - 1];
+            const endP = project3D(lastPoint.x, lastPoint.y, lastPoint.z, viewRotation, cx, cy);
+            ctx.beginPath();
+            ctx.arc(endP.x, endP.y, 8, 0, Math.PI * 2);
+            ctx.fillStyle = '#c9a227';
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(endP.x, endP.y, 12, 0, Math.PI * 2);
+            ctx.strokeStyle = 'rgba(201, 162, 39, 0.5)';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            // Update stats
+            const zetaAlt = lastPoint.z / 50;
+            const totalDist = Math.sqrt(lastPoint.x**2 + lastPoint.y**2 + lastPoint.z**2) / 50;
+            document.getElementById('zetaAltitude').textContent = zetaAlt.toFixed(2);
+            document.getElementById('totalDist').textContent = totalDist.toFixed(2);
+            document.getElementById('irreversible').textContent = zetaAlt > 0 ? 'TRUE' : 'FALSE';
+            document.getElementById('irreversible').style.color = zetaAlt > 0 ? '#4ade80' : '#ef4444';
+            
+            // Gradient label
+            ctx.font = '14px JetBrains Mono';
+            ctx.fillStyle = color;
+            const gradientNames = {
+                vertical: '∇₁ Vertical',
+                lateral: '∇₂ Lateral',
+                diagonal: '∇₃ Diagonal'
+            };
+            ctx.fillText(gradientNames[currentGradient], 20, 30);
+        }
+        
+        // ============================================
+        // EVENT HANDLERS
+        // ============================================
+        
+        document.querySelectorAll('.gradient-option').forEach(option => {
+            option.addEventListener('click', () => {
+                document.querySelectorAll('.gradient-option').forEach(o => o.classList.remove('active'));
+                option.classList.add('active');
+                currentGradient = option.dataset.gradient;
+                drawMainVisualization();
+            });
+        });
+        
+        document.getElementById('revolutions').addEventListener('input', (e) => {
+            revolutions = parseFloat(e.target.value);
+            document.getElementById('revValue').textContent = revolutions.toFixed(1);
+            drawMainVisualization();
+        });
+        
+        document.getElementById('intensity').addEventListener('input', (e) => {
+            intensity = parseFloat(e.target.value);
+            document.getElementById('intValue').textContent = intensity.toFixed(1);
+            drawMainVisualization();
+        });
+        
+        document.getElementById('rotation').addEventListener('input', (e) => {
+            viewRotation = parseFloat(e.target.value);
+            document.getElementById('rotValue').textContent = viewRotation + '°';
+            drawMainVisualization();
+        });
+        
+        // Initial draw
+        drawAxisDiagram();
+        drawMainVisualization();
+        
+        // Resize handler
+        window.addEventListener('resize', () => {
+            drawMainVisualization();
+        });
+        
+        // Subtle animation
+        function animate() {
+            animationFrame++;
+            // Could add subtle movement here
+            requestAnimationFrame(animate);
+        }
+        animate();
+    </script>
+</body>
+</html>

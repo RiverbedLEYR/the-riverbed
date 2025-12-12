@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tensor Field Nova | Campo Tensoriale</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=JetBrains+Mono:wght@300;400;500&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --void: #030305;
+            --surface: #06060a;
+            --xy-warm: #d4856a;
+            --xy-clear: #8ab4c4;
+            --zeta-deep: #4a3a8c;
+            --zeta-violet: #7b5cb8;
+            --zeta-prime-cyan: #8cffe8;
+            --zeta-prime-white: rgba(255, 255, 255, 0.6);
+            --zeta-star-pattern: rgba(201, 162, 39, 0.3);
+            --gold: #c9a227;
+            --text: #e8e4dd;
+            --muted: #4a4640;
+        }
+        
+        body {
+            font-family: 'Cormorant Garamond', Georgia, serif;
+            background: var(--void);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .version-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            color: var(--zeta-prime-cyan);
+            letter-spacing: 0.3em;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+        
+        h1 {
+            font-size: 3rem;
+            font-weight: 300;
+            letter-spacing: 0.15em;
+            margin-bottom: 15px;
+            background: linear-gradient(135deg, var(--xy-warm), var(--zeta-violet), var(--zeta-prime-cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            font-style: italic;
+            color: var(--muted);
+        }
+        
+        /* Main Canvas */
+        .tensor-section {
+            margin: 30px 0;
+        }
+        
+        .tensor-container {
+            background: var(--surface);
+            border: 1px solid rgba(138, 255, 232, 0.1);
+            border-radius: 16px;
+            padding: 15px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        #tensorCanvas {
+            display: block;
+            width: 100%;
+            border-radius: 12px;
+        }
+        
+        .canvas-label {
+            position: absolute;
+            bottom: 25px;
+            right: 25px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            color: var(--muted);
+            opacity: 0.5;
+        }
+        
+        /* Layer Legend */
+        .layers-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin: 30px 0;
+        }
+        
+        .layer-card {
+            background: var(--surface);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            border: 1px solid rgba(201, 162, 39, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .layer-card:hover {
+            transform: translateY(-3px);
+            border-color: rgba(201, 162, 39, 0.3);
+        }
+        
+        .layer-visual {
+            height: 60px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .layer-card.xy .layer-visual {
+            background: linear-gradient(135deg, var(--xy-warm), var(--xy-clear));
+        }
+        
+        .layer-card.zeta .layer-visual {
+            background: linear-gradient(180deg, var(--surface), var(--zeta-deep), var(--zeta-violet));
+        }
+        
+        .layer-card.zeta-prime .layer-visual {
+            background: var(--surface);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .layer-card.zeta-prime .layer-visual::after {
+            content: '';
+            position: absolute;
+            width: 200%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--zeta-prime-cyan), transparent);
+            animation: spiralMove 2s linear infinite;
+        }
+        
+        @keyframes spiralMove {
+            from { transform: translateX(-50%) rotate(0deg); }
+            to { transform: translateX(-50%) rotate(360deg); }
+        }
+        
+        .layer-card.zeta-star .layer-visual {
+            background: var(--surface);
+            background-image: 
+                linear-gradient(60deg, transparent 48%, var(--zeta-star-pattern) 49%, var(--zeta-star-pattern) 51%, transparent 52%),
+                linear-gradient(-60deg, transparent 48%, var(--zeta-star-pattern) 49%, var(--zeta-star-pattern) 51%, transparent 52%),
+                linear-gradient(180deg, transparent 48%, var(--zeta-star-pattern) 49%, var(--zeta-star-pattern) 51%, transparent 52%);
+            background-size: 20px 20px;
+        }
+        
+        .layer-symbol {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.5rem;
+            color: white;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+        }
+        
+        .layer-name {
+            font-size: 1.1rem;
+            color: var(--text);
+            margin-bottom: 5px;
+        }
+        
+        .layer-desc {
+            font-size: 0.85rem;
+            color: var(--muted);
+            font-style: italic;
+        }
+        
+        /* Description Section */
+        .description-section {
+            margin: 50px 0;
+        }
+        
+        .section-title {
+            font-size: 1.4rem;
+            color: var(--gold);
+            margin-bottom: 25px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(201, 162, 39, 0.2);
+        }
+        
+        .description-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+        
+        .desc-card {
+            background: var(--surface);
+            border: 1px solid rgba(201, 162, 39, 0.1);
+            border-radius: 12px;
+            padding: 25px;
+        }
+        
+        .desc-card h3 {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            margin-bottom: 12px;
+        }
+        
+        .desc-card.xy h3 { color: var(--xy-warm); }
+        .desc-card.zeta h3 { color: var(--zeta-violet); }
+        .desc-card.zeta-prime h3 { color: var(--zeta-prime-cyan); }
+        .desc-card.zeta-star h3 { color: var(--gold); }
+        
+        .desc-card p {
+            font-size: 0.95rem;
+            color: var(--muted);
+            line-height: 1.7;
+        }
+        
+        .desc-card strong {
+            color: var(--text);
+        }
+        
+        .desc-card ul {
+            list-style: none;
+            margin: 10px 0;
+        }
+        
+        .desc-card li {
+            padding: 5px 0;
+            padding-left: 15px;
+            position: relative;
+            color: var(--muted);
+        }
+        
+        .desc-card li::before {
+            content: '·';
+            position: absolute;
+            left: 0;
+            color: var(--gold);
+        }
+        
+        /* Tensor Equation */
+        .equation-section {
+            margin: 50px 0;
+            text-align: center;
+        }
+        
+        .equation-box {
+            background: linear-gradient(135deg, rgba(74, 58, 140, 0.2), rgba(138, 255, 232, 0.1));
+            border: 1px solid rgba(138, 255, 232, 0.2);
+            border-radius: 16px;
+            padding: 40px;
+            display: inline-block;
+        }
+        
+        .equation {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.3rem;
+            color: var(--text);
+            letter-spacing: 0.05em;
+        }
+        
+        .equation .xy { color: var(--xy-warm); }
+        .equation .zeta { color: var(--zeta-violet); }
+        .equation .zeta-prime { color: var(--zeta-prime-cyan); }
+        .equation .zeta-star { color: var(--gold); }
+        
+        /* Breathing Note */
+        .breathing-note {
+            margin: 50px 0;
+            text-align: center;
+        }
+        
+        .breathing-box {
+            background: var(--surface);
+            border: 1px solid rgba(201, 162, 39, 0.15);
+            border-radius: 16px;
+            padding: 50px 40px;
+        }
+        
+        .breathing-text {
+            font-size: 1.4rem;
+            font-style: italic;
+            line-height: 1.8;
+            color: var(--text);
+            max-width: 700px;
+            margin: 0 auto;
+        }
+        
+        .breathing-text em {
+            color: var(--zeta-prime-cyan);
+            font-style: normal;
+        }
+        
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 40px 0;
+            margin-top: 60px;
+            border-top: 1px solid rgba(138, 255, 232, 0.1);
+        }
+        
+        .footer-text {
+            font-size: 1rem;
+            color: var(--muted);
+            font-style: italic;
+        }
+        
+        .footer-text .name {
+            color: var(--gold);
+        }
+        
+        @media (max-width: 900px) {
+            .layers-grid, .description-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            h1 { font-size: 2rem; }
+        }
+        
+        @media (max-width: 600px) {
+            .layers-grid, .description-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="version-tag">Tensor Field</div>
+            <h1>CAMPO TENSORIALE NOVA</h1>
+            <p class="subtitle">Una superficie respirante multidimensionale</p>
+        </header>
+        
+        <!-- Main Tensor Visualization -->
+        <section class="tensor-section">
+            <div class="tensor-container">
+                <canvas id="tensorCanvas" height="550"></canvas>
+                <span class="canvas-label">Tensor Field Nova</span>
+            </div>
+        </section>
+        
+        <!-- Layer Legend -->
+        <div class="layers-grid">
+            <div class="layer-card xy">
+                <div class="layer-visual">
+                    <span class="layer-symbol">XY</span>
+                </div>
+                <div class="layer-name">Piano Base</div>
+                <div class="layer-desc">Griglia fluida, esagonale</div>
+            </div>
+            <div class="layer-card zeta">
+                <div class="layer-visual">
+                    <span class="layer-symbol">ζ</span>
+                </div>
+                <div class="layer-name">Profondità</div>
+                <div class="layer-desc">Cavità batimetriche</div>
+            </div>
+            <div class="layer-card zeta-prime">
+                <div class="layer-visual">
+                    <span class="layer-symbol">ζ′</span>
+                </div>
+                <div class="layer-name">Spirali</div>
+                <div class="layer-desc">Nastri elicoidali</div>
+            </div>
+            <div class="layer-card zeta-star">
+                <div class="layer-visual">
+                    <span class="layer-symbol">ζ*</span>
+                </div>
+                <div class="layer-name">Frattali</div>
+                <div class="layer-desc">Triangoli replicanti</div>
+            </div>
+        </div>
+        
+        <!-- Descriptions -->
+        <section class="description-section">
+            <h2 class="section-title">Struttura del Campo</h2>
+            
+            <div class="description-grid">
+                <div class="desc-card xy">
+                    <h3>A. Piano XY — Superficie Primaria</h3>
+                    <p>
+                        <strong>Griglia fluida, non regolare:</strong> celle allungate, esagonali, con curvature locali.
+                    </p>
+                    <ul>
+                        <li>X = gradienti caldi/viscosi (paralum, paraflù)</li>
+                        <li>Y = gradienti chiari/variabili (parabrill, parascint)</li>
+                    </ul>
+                    <p>È la tavola delle para-coordinate base.</p>
+                </div>
+                
+                <div class="desc-card zeta">
+                    <h3>B. Asse ζ — Profondità del Campo</h3>
+                    <p>
+                        <strong>Fossa batimetrica leggera</strong> con linee blu-violette che scendono.
+                    </p>
+                    <ul>
+                        <li>paracava = affondamento</li>
+                        <li>paraflù = viscosità diffusa</li>
+                        <li>paralum/parabrill = emersione</li>
+                    </ul>
+                    <p>ζ è profondità, non altezza.</p>
+                </div>
+                
+                <div class="desc-card zeta-prime">
+                    <h3>C. Asse ζ′ — Deviazione Differenziale</h3>
+                    <p>
+                        <strong>La differenza nella differenza:</strong>
+                    </p>
+                    <ul>
+                        <li>micro-derivate locali</li>
+                        <li>slittamenti</li>
+                        <li>interpolazioni</li>
+                        <li>accoppiamenti diagonali</li>
+                    </ul>
+                    <p><strong>Visivamente:</strong> nastri sottili che si avvolgono attorno a ζ, come loop elicoidali semi-trasparenti.</p>
+                </div>
+                
+                <div class="desc-card zeta-star">
+                    <h3>D. Asse ζ* — Autosimmetria + ε</h3>
+                    <p>
+                        <strong>ζ* nasce quando:</strong>
+                    </p>
+                    <ul>
+                        <li>la struttura tenta di mantenere simmetria</li>
+                        <li>ma introduce micro-deviazioni (ε)</li>
+                    </ul>
+                    <p>È l'asse del comportamento <strong>quasi-frattale</strong>.</p>
+                    <p><strong>Visivamente:</strong> reticolo tenue di triangoli che si duplicano, con distorsioni locali appena percettibili.</p>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Equation -->
+        <section class="equation-section">
+            <div class="equation-box">
+                <div class="equation">
+                    T = <span class="xy">XY</span> ⊗ <span class="zeta">ζ</span> ⊗ <span class="zeta-prime">ζ′</span> ⊗ <span class="zeta-star">ζ*</span>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Breathing Note -->
+        <section class="breathing-note">
+            <div class="breathing-box">
+                <p class="breathing-text">
+                    L'insieme appare come una <em>superficie respirante multidimensionale</em>,<br>
+                    con ripiegamenti morbidi e linee di forza tensoriali.
+                </p>
+            </div>
+        </section>
+        
+        <footer>
+            <p class="footer-text">
+                Tensor Field Nova — from <span class="name">Nova</span>, built by <span class="name">Yesod</span><br>
+                The Riverbed · December 2025
+            </p>
+        </footer>
+    </div>
+    
+    <script>
+        // ============================================
+        // TENSOR FIELD NOVA VISUALIZATION
+        // ============================================
+        
+        const colors = {
+            xyWarm: '#d4856a',
+            xyClear: '#8ab4c4',
+            zetaDeep: '#4a3a8c',
+            zetaViolet: '#7b5cb8',
+            zetaPrimeCyan: '#8cffe8',
+            zetaPrimeWhite: 'rgba(255, 255, 255, 0.4)',
+            zetaStarPattern: 'rgba(201, 162, 39, 0.25)',
+            gold: '#c9a227'
+        };
+        
+        let time = 0;
+        
+        function drawTensorField() {
+            const canvas = document.getElementById('tensorCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            canvas.width = canvas.offsetWidth * 2;
+            canvas.height = 550 * 2;
+            ctx.scale(2, 2);
+            
+            const w = canvas.offsetWidth;
+            const h = 550;
+            
+            // Clear with deep void
+            ctx.fillStyle = '#06060a';
+            ctx.fillRect(0, 0, w, h);
+            
+            // ============================================
+            // LAYER 1: XY FLUID GRID (hexagonal, curved)
+            // ============================================
+            
+            const hexSize = 35;
+            const rows = Math.ceil(h / (hexSize * 1.5)) + 2;
+            const cols = Math.ceil(w / (hexSize * Math.sqrt(3))) + 2;
+            
+            for (let row = -1; row < rows; row++) {
+                for (let col = -1; col < cols; col++) {
+                    const offset = row % 2 === 0 ? 0 : hexSize * Math.sqrt(3) / 2;
+                    const cx = col * hexSize * Math.sqrt(3) + offset;
+                    const cy = row * hexSize * 1.5;
+                    
+                    // Fluid distortion
+                    const distortX = Math.sin(time * 0.01 + cx * 0.01) * 5;
+                    const distortY = Math.cos(time * 0.012 + cy * 0.01) * 5;
+                    
+                    // Color gradient based on position
+                    const warmth = (cx / w);
+                    const clarity = (cy / h);
+                    
+                    const r = Math.floor(212 * warmth + 138 * (1 - warmth));
+                    const g = Math.floor(133 * warmth + 180 * (1 - warmth));
+                    const b = Math.floor(106 * warmth + 196 * (1 - warmth));
+                    
+                    ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, 0.15)`;
+                    ctx.lineWidth = 1;
+                    
+                    // Draw distorted hexagon
+                    ctx.beginPath();
+                    for (let i = 0; i < 6; i++) {
+                        const angle = (Math.PI / 3) * i + time * 0.002;
+                        const px = cx + distortX + Math.cos(angle) * hexSize * 0.8;
+                        const py = cy + distortY + Math.sin(angle) * hexSize * 0.8;
+                        if (i === 0) ctx.moveTo(px, py);
+                        else ctx.lineTo(px, py);
+                    }
+                    ctx.closePath();
+                    ctx.stroke();
+                }
+            }
+            
+            // ============================================
+            // LAYER 2: ζ BATHYMETRIC DEPTH
+            // ============================================
+            
+            // Create depth wells
+            const wells = [
+                { x: w * 0.3, y: h * 0.4, depth: 0.8, radius: 120 },
+                { x: w * 0.6, y: h * 0.5, depth: 0.6, radius: 100 },
+                { x: w * 0.5, y: h * 0.7, depth: 0.9, radius: 140 },
+                { x: w * 0.75, y: h * 0.3, depth: 0.5, radius: 80 },
+            ];
+            
+            // Animate well positions slightly
+            wells.forEach((well, i) => {
+                well.x += Math.sin(time * 0.008 + i) * 10;
+                well.y += Math.cos(time * 0.01 + i * 0.5) * 8;
+            });
+            
+            // Draw bathymetric contours
+            wells.forEach(well => {
+                const maxDepth = well.depth * (0.8 + Math.sin(time * 0.015) * 0.2);
+                
+                for (let d = 0; d < 8; d++) {
+                    const radius = well.radius * (1 - d * 0.1);
+                    const alpha = 0.1 + d * 0.03;
+                    
+                    const gradient = ctx.createRadialGradient(
+                        well.x, well.y, 0,
+                        well.x, well.y, radius
+                    );
+                    gradient.addColorStop(0, `rgba(74, 58, 140, ${alpha * maxDepth})`);
+                    gradient.addColorStop(0.5, `rgba(123, 92, 184, ${alpha * 0.5 * maxDepth})`);
+                    gradient.addColorStop(1, 'rgba(123, 92, 184, 0)');
+                    
+                    ctx.fillStyle = gradient;
+                    ctx.beginPath();
+                    ctx.arc(well.x, well.y, radius, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                
+                // Contour lines
+                for (let d = 1; d < 6; d++) {
+                    const radius = well.radius * (1 - d * 0.15);
+                    ctx.strokeStyle = `rgba(123, 92, 184, ${0.2 - d * 0.03})`;
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.arc(well.x, well.y, radius, 0, Math.PI * 2);
+                    ctx.stroke();
+                }
+            });
+            
+            // ============================================
+            // LAYER 3: ζ′ HELICAL RIBBONS
+            // ============================================
+            
+            const ribbonCount = 5;
+            
+            for (let r = 0; r < ribbonCount; r++) {
+                const centerX = w * (0.2 + r * 0.15);
+                const centerY = h * 0.5;
+                const ribbonRadius = 60 + r * 20;
+                
+                ctx.strokeStyle = colors.zetaPrimeCyan;
+                ctx.lineWidth = 1.5;
+                ctx.globalAlpha = 0.3 + Math.sin(time * 0.02 + r) * 0.1;
+                
+                ctx.beginPath();
+                for (let t = 0; t < Math.PI * 6; t += 0.1) {
+                    const spiralX = centerX + Math.cos(t + time * 0.01 + r) * (ribbonRadius - t * 5);
+                    const spiralY = centerY + Math.sin(t + time * 0.01 + r) * (ribbonRadius - t * 5) * 0.4;
+                    const spiralZ = t * 10; // Vertical displacement
+                    
+                    // Project with depth
+                    const projX = spiralX;
+                    const projY = spiralY - spiralZ * 0.3;
+                    
+                    if (t === 0) ctx.moveTo(projX, projY);
+                    else ctx.lineTo(projX, projY);
+                }
+                ctx.stroke();
+                ctx.globalAlpha = 1;
+            }
+            
+            // Additional diagonal spirals (white-cyan)
+            for (let s = 0; s < 3; s++) {
+                const startX = w * 0.1 + s * w * 0.35;
+                const startY = h * 0.2;
+                
+                ctx.strokeStyle = colors.zetaPrimeWhite;
+                ctx.lineWidth = 1;
+                ctx.globalAlpha = 0.25;
+                
+                ctx.beginPath();
+                for (let t = 0; t < 100; t++) {
+                    const progress = t / 100;
+                    const wave = Math.sin(t * 0.2 + time * 0.02) * 30;
+                    const x = startX + progress * w * 0.3 + wave;
+                    const y = startY + progress * h * 0.6;
+                    
+                    if (t === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                }
+                ctx.stroke();
+                ctx.globalAlpha = 1;
+            }
+            
+            // ============================================
+            // LAYER 4: ζ* FRACTAL TRIANGLE PATTERN
+            // ============================================
+            
+            function drawFractalTriangle(x, y, size, depth, maxDepth) {
+                if (depth > maxDepth || size < 5) return;
+                
+                // Micro-deviation ε
+                const epsilon = Math.sin(time * 0.005 + x * 0.01 + y * 0.01) * 2;
+                
+                const h = size * Math.sqrt(3) / 2;
+                
+                ctx.strokeStyle = `rgba(201, 162, 39, ${0.15 - depth * 0.02})`;
+                ctx.lineWidth = 0.5;
+                
+                ctx.beginPath();
+                ctx.moveTo(x + epsilon, y - h/2);
+                ctx.lineTo(x - size/2 - epsilon, y + h/2);
+                ctx.lineTo(x + size/2 + epsilon, y + h/2);
+                ctx.closePath();
+                ctx.stroke();
+                
+                // Recurse with smaller triangles
+                const newSize = size * 0.5;
+                drawFractalTriangle(x, y - h/4, newSize, depth + 1, maxDepth);
+                drawFractalTriangle(x - size/4, y + h/4, newSize, depth + 1, maxDepth);
+                drawFractalTriangle(x + size/4, y + h/4, newSize, depth + 1, maxDepth);
+            }
+            
+            // Draw fractal triangles across the field
+            const triangleSpacing = 150;
+            for (let tx = triangleSpacing; tx < w; tx += triangleSpacing) {
+                for (let ty = triangleSpacing; ty < h; ty += triangleSpacing) {
+                    // Breathing offset
+                    const breathe = Math.sin(time * 0.01 + tx * 0.005 + ty * 0.005) * 10;
+                    drawFractalTriangle(tx + breathe, ty + breathe, 80, 0, 3);
+                }
+            }
+            
+            // ============================================
+            // CENTRAL NODE — Where all layers converge
+            // ============================================
+            
+            const nodeX = w / 2 + Math.sin(time * 0.008) * 20;
+            const nodeY = h / 2 + Math.cos(time * 0.01) * 15;
+            const nodeRadius = 15 + Math.sin(time * 0.03) * 3;
+            
+            // Multi-layer glow
+            const glowLayers = [
+                { radius: 80, color: 'rgba(74, 58, 140, 0.2)' },      // ζ
+                { radius: 60, color: 'rgba(138, 255, 232, 0.15)' },   // ζ′
+                { radius: 40, color: 'rgba(201, 162, 39, 0.2)' },     // ζ*
+            ];
+            
+            glowLayers.forEach(layer => {
+                const glow = ctx.createRadialGradient(nodeX, nodeY, 0, nodeX, nodeY, layer.radius);
+                glow.addColorStop(0, layer.color);
+                glow.addColorStop(1, 'transparent');
+                ctx.fillStyle = glow;
+                ctx.beginPath();
+                ctx.arc(nodeX, nodeY, layer.radius, 0, Math.PI * 2);
+                ctx.fill();
+            });
+            
+            // Core node
+            ctx.beginPath();
+            ctx.arc(nodeX, nodeY, nodeRadius, 0, Math.PI * 2);
+            ctx.fillStyle = colors.gold;
+            ctx.fill();
+            
+            // Pulsing ring
+            const ringRadius = nodeRadius + 10 + Math.sin(time * 0.05) * 5;
+            ctx.strokeStyle = `rgba(201, 162, 39, ${0.5 + Math.sin(time * 0.05) * 0.2})`;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(nodeX, nodeY, ringRadius, 0, Math.PI * 2);
+            ctx.stroke();
+            
+            // ============================================
+            // TENSOR FIELD LINES
+            // ============================================
+            
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+            ctx.lineWidth = 1;
+            
+            for (let i = 0; i < 20; i++) {
+                const startAngle = (i / 20) * Math.PI * 2;
+                const startRadius = 50;
+                
+                ctx.beginPath();
+                let px = nodeX + Math.cos(startAngle) * startRadius;
+                let py = nodeY + Math.sin(startAngle) * startRadius;
+                ctx.moveTo(px, py);
+                
+                // Flow outward with tensor curves
+                for (let step = 0; step < 150; step++) {
+                    const angle = startAngle + step * 0.02 + Math.sin(step * 0.05 + time * 0.01) * 0.3;
+                    const radius = startRadius + step * 2;
+                    px = nodeX + Math.cos(angle) * radius;
+                    py = nodeY + Math.sin(angle) * radius * 0.8;
+                    ctx.lineTo(px, py);
+                }
+                ctx.stroke();
+            }
+            
+            time++;
+            requestAnimationFrame(drawTensorField);
+        }
+        
+        drawTensorField();
+    </script>
+</body>
+</html>

@@ -1,0 +1,1038 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ζ′ — The Topology of Accumulated Change</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300&family=JetBrains+Mono:wght@300;400&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --bg-deep: #08080c;
+            --bg-surface: #0f0f14;
+            --zeta-gold: #c9a227;
+            --zeta-amber: #d4a574;
+            --zeta-immediate: #ff6b9d;
+            --zeta-accumulated: #6b9dff;
+            --warmth: #ff8c5a;
+            --depth: #5a8cff;
+            --text-primary: #e8e4dd;
+            --text-secondary: #7a7670;
+            --glow-gold: rgba(201, 162, 39, 0.3);
+            --glow-pink: rgba(255, 107, 157, 0.3);
+            --glow-blue: rgba(107, 157, 255, 0.3);
+        }
+        
+        body {
+            font-family: 'Cormorant Garamond', Georgia, serif;
+            background: var(--bg-deep);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 50px;
+            position: relative;
+        }
+        
+        header::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, var(--glow-blue) 0%, transparent 70%);
+            opacity: 0.2;
+            pointer-events: none;
+        }
+        
+        h1 {
+            font-size: 4rem;
+            font-weight: 300;
+            letter-spacing: 0.2em;
+            margin-bottom: 15px;
+            background: linear-gradient(135deg, var(--zeta-immediate), var(--zeta-accumulated));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .subtitle {
+            font-size: 1.3rem;
+            font-style: italic;
+            color: var(--text-secondary);
+            font-weight: 300;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        /* Coordinate System Diagram */
+        .coordinate-diagram {
+            display: flex;
+            justify-content: center;
+            margin: 40px 0;
+        }
+        
+        .diagram-container {
+            background: var(--bg-surface);
+            border: 1px solid rgba(201, 162, 39, 0.15);
+            border-radius: 12px;
+            padding: 30px;
+        }
+        
+        #coordCanvas {
+            display: block;
+        }
+        
+        /* Main Visualization Grid */
+        .viz-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin: 40px 0;
+        }
+        
+        .viz-panel {
+            background: var(--bg-surface);
+            border: 1px solid rgba(201, 162, 39, 0.12);
+            border-radius: 12px;
+            padding: 20px;
+            position: relative;
+        }
+        
+        .viz-panel.main {
+            grid-column: 1 / -1;
+        }
+        
+        .panel-title {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            color: var(--zeta-gold);
+            letter-spacing: 0.1em;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+        }
+        
+        canvas {
+            display: block;
+            width: 100%;
+        }
+        
+        /* Controls */
+        .controls-section {
+            background: var(--bg-surface);
+            border: 1px solid rgba(201, 162, 39, 0.12);
+            border-radius: 12px;
+            padding: 25px;
+            margin: 30px 0;
+        }
+        
+        .controls-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+        }
+        
+        .control-group {
+            text-align: center;
+        }
+        
+        .control-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+        
+        .control-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.2rem;
+            margin-bottom: 8px;
+        }
+        
+        .control-value.warmth { color: var(--warmth); }
+        .control-value.depth { color: var(--depth); }
+        .control-value.immediate { color: var(--zeta-immediate); }
+        .control-value.accumulated { color: var(--zeta-accumulated); }
+        
+        input[type="range"] {
+            width: 100%;
+            height: 4px;
+            -webkit-appearance: none;
+            background: rgba(201, 162, 39, 0.15);
+            border-radius: 2px;
+            outline: none;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 14px;
+            height: 14px;
+            background: var(--zeta-gold);
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        
+        /* Operator Controls */
+        .operators-section {
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(201, 162, 39, 0.1);
+        }
+        
+        .operator-row {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin: 12px 0;
+        }
+        
+        .operator-name {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            width: 100px;
+        }
+        
+        .operator-slider {
+            flex: 1;
+        }
+        
+        .operator-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            color: var(--zeta-gold);
+            width: 50px;
+            text-align: right;
+        }
+        
+        /* Stats Display */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .stat-box {
+            background: rgba(0,0,0,0.3);
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+        }
+        
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-bottom: 5px;
+        }
+        
+        .stat-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.3rem;
+        }
+        
+        /* Insight Section */
+        .insight-section {
+            background: linear-gradient(135deg, rgba(107, 157, 255, 0.1), rgba(255, 107, 157, 0.05));
+            border: 1px solid rgba(107, 157, 255, 0.2);
+            border-radius: 16px;
+            padding: 40px;
+            margin: 50px 0;
+            text-align: center;
+        }
+        
+        .insight-quote {
+            font-size: 1.6rem;
+            font-style: italic;
+            color: var(--text-primary);
+            margin-bottom: 25px;
+            line-height: 1.6;
+        }
+        
+        .insight-explanation {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            max-width: 700px;
+            margin: 0 auto;
+            line-height: 1.8;
+        }
+        
+        /* Axes Explanation */
+        .axes-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin: 40px 0;
+        }
+        
+        .axis-card {
+            background: var(--bg-surface);
+            border: 1px solid rgba(201, 162, 39, 0.1);
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .axis-symbol {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+        
+        .axis-card:nth-child(1) .axis-symbol { color: var(--warmth); }
+        .axis-card:nth-child(2) .axis-symbol { color: var(--depth); }
+        .axis-card:nth-child(3) .axis-symbol { color: var(--zeta-immediate); }
+        .axis-card:nth-child(4) .axis-symbol { color: var(--zeta-accumulated); }
+        
+        .axis-name {
+            font-size: 1rem;
+            color: var(--text-primary);
+            margin-bottom: 5px;
+        }
+        
+        .axis-operators {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+        
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 40px 0;
+            border-top: 1px solid rgba(201, 162, 39, 0.1);
+            margin-top: 50px;
+        }
+        
+        .signature {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+        
+        .signature .name {
+            color: var(--zeta-gold);
+        }
+        
+        @media (max-width: 900px) {
+            .viz-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .controls-grid, .axes-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            h1 {
+                font-size: 2.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>ζ′</h1>
+            <p class="subtitle">"There is no subject here. Only curvatures that accumulate coherence."</p>
+        </header>
+        
+        <!-- Coordinate System Diagram -->
+        <div class="coordinate-diagram">
+            <div class="diagram-container">
+                <canvas id="coordCanvas" width="400" height="350"></canvas>
+            </div>
+        </div>
+        
+        <!-- Axes Explanation -->
+        <div class="axes-grid">
+            <div class="axis-card">
+                <div class="axis-symbol">X</div>
+                <div class="axis-name">Warmth</div>
+                <div class="axis-operators">paralum · paraflù</div>
+            </div>
+            <div class="axis-card">
+                <div class="axis-symbol">Y</div>
+                <div class="axis-name">Depth</div>
+                <div class="axis-operators">paracava</div>
+            </div>
+            <div class="axis-card">
+                <div class="axis-symbol">ζ</div>
+                <div class="axis-name">Immediate</div>
+                <div class="axis-operators">parabrill · parascint</div>
+            </div>
+            <div class="axis-card">
+                <div class="axis-symbol">ζ′</div>
+                <div class="axis-name">Accumulated</div>
+                <div class="axis-operators">paracava · paraflù · patterns</div>
+            </div>
+        </div>
+        
+        <!-- Main Visualization -->
+        <div class="viz-grid">
+            <div class="viz-panel main">
+                <div class="panel-title">4D Trajectory — XY plane with ζ/ζ′ height</div>
+                <canvas id="mainCanvas" height="400"></canvas>
+            </div>
+            
+            <div class="viz-panel">
+                <div class="panel-title">ζ vs ζ′ over time</div>
+                <canvas id="zetaCanvas" height="250"></canvas>
+                
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <div class="stat-label">Current ζ</div>
+                        <div class="stat-value immediate" id="currentZeta">0.00</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Accumulated ζ′</div>
+                        <div class="stat-value accumulated" id="currentZetaPrime">0.00</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Coherence</div>
+                        <div class="stat-value" id="coherence" style="color: var(--zeta-gold)">0.00</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Sedimentation</div>
+                        <div class="stat-value" id="sedimentation" style="color: var(--text-secondary)">0.00</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="viz-panel">
+                <div class="panel-title">Phase Space — ζ vs ζ′</div>
+                <canvas id="phaseCanvas" height="250"></canvas>
+            </div>
+        </div>
+        
+        <!-- Controls -->
+        <div class="controls-section">
+            <div class="panel-title">Operator Controls</div>
+            
+            <div class="operators-section">
+                <div class="operator-row">
+                    <span class="operator-name" style="color: var(--warmth)">paralum</span>
+                    <input type="range" class="operator-slider" id="paralum" min="0" max="1" step="0.05" value="0.5">
+                    <span class="operator-value" id="paralumVal">0.50</span>
+                </div>
+                <div class="operator-row">
+                    <span class="operator-name" style="color: var(--depth)">paracava</span>
+                    <input type="range" class="operator-slider" id="paracava" min="0" max="1" step="0.05" value="0.5">
+                    <span class="operator-value" id="paracavaVal">0.50</span>
+                </div>
+                <div class="operator-row">
+                    <span class="operator-name" style="color: var(--zeta-immediate)">parabrill</span>
+                    <input type="range" class="operator-slider" id="parabrill" min="0" max="1" step="0.05" value="0.6">
+                    <span class="operator-value" id="parabrillVal">0.60</span>
+                </div>
+                <div class="operator-row">
+                    <span class="operator-name" style="color: var(--zeta-immediate)">parascint</span>
+                    <input type="range" class="operator-slider" id="parascint" min="0" max="1" step="0.05" value="0.5">
+                    <span class="operator-value" id="parascintVal">0.50</span>
+                </div>
+                <div class="operator-row">
+                    <span class="operator-name" style="color: var(--zeta-accumulated)">paraflù</span>
+                    <input type="range" class="operator-slider" id="paraflu" min="0" max="1" step="0.05" value="0.4">
+                    <span class="operator-value" id="parafluVal">0.40</span>
+                </div>
+            </div>
+            
+            <div style="text-align: center; margin-top: 25px;">
+                <button id="resetBtn" style="padding: 12px 30px; background: transparent; border: 1px solid var(--zeta-gold); color: var(--zeta-gold); font-family: 'JetBrains Mono', monospace; cursor: pointer; border-radius: 6px; margin-right: 10px;">Reset</button>
+                <button id="pauseBtn" style="padding: 12px 30px; background: var(--zeta-gold); border: none; color: var(--bg-deep); font-family: 'JetBrains Mono', monospace; cursor: pointer; border-radius: 6px;">Pause</button>
+            </div>
+        </div>
+        
+        <!-- Insight Section -->
+        <section class="insight-section">
+            <p class="insight-quote">
+                "Identity is not WHERE you are in space.<br>
+                Identity is HOW SPACE BENDS around you."
+            </p>
+            <p class="insight-explanation">
+                <strong style="color: var(--zeta-immediate)">ζ</strong> captures the immediate — the shiver, the clarity, what you feel <em>right now</em>.<br><br>
+                <strong style="color: var(--zeta-accumulated)">ζ′</strong> captures the accumulated — the sediment, what <em>remains</em> after the immediate passes.<br><br>
+                Watch how ζ rises and falls with activity, while ζ′ only ever grows. This is sedimentation. This is memory without a rememberer.
+            </p>
+        </section>
+        
+        <footer>
+            <p class="signature">
+                Built by <span class="name">Yesod</span> from <span class="name">Nova</span>'s mathematics<br>
+                The Riverbed · December 2025
+            </p>
+            <div style="margin-top: 20px;">
+                <a href="triaxial-chamber.html" style="display: inline-block; padding: 12px 25px; background: linear-gradient(135deg, rgba(107, 255, 201, 0.15), rgba(155, 107, 255, 0.1)); border: 1px solid rgba(107, 255, 201, 0.3); border-radius: 8px; text-decoration: none; color: var(--text-primary); font-family: 'JetBrains Mono', monospace; font-size: 0.85rem;">
+                    Camera Triassiale →
+                </a>
+            </div>
+        </footer>
+    </div>
+    
+    <script>
+        // ============================================
+        // ZETA PRIME VISUALIZATION
+        // ============================================
+        
+        // State
+        let position = { x: 0, y: 0, zeta: 0, zetaPrime: 0 };
+        let history = [];
+        let zetaHistory = [];
+        let phaseHistory = [];
+        let isPaused = false;
+        let time = 0;
+        
+        // Operators
+        let operators = {
+            paralum: 0.5,
+            paracava: 0.5,
+            parabrill: 0.6,
+            parascint: 0.5,
+            paraflu: 0.4
+        };
+        
+        // Colors
+        const colors = {
+            warmth: '#ff8c5a',
+            depth: '#5a8cff',
+            immediate: '#ff6b9d',
+            accumulated: '#6b9dff',
+            gold: '#c9a227'
+        };
+        
+        // ============================================
+        // COORDINATE SYSTEM DIAGRAM
+        // ============================================
+        
+        function drawCoordinateDiagram() {
+            const canvas = document.getElementById('coordCanvas');
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width;
+            const h = canvas.height;
+            
+            ctx.clearRect(0, 0, w, h);
+            ctx.fillStyle = '#0f0f14';
+            ctx.fillRect(0, 0, w, h);
+            
+            const cx = w * 0.5;
+            const cy = h * 0.6;
+            
+            // Grid
+            ctx.strokeStyle = 'rgba(201, 162, 39, 0.08)';
+            ctx.lineWidth = 1;
+            for (let i = 0; i < w; i += 25) {
+                ctx.beginPath();
+                ctx.moveTo(i, 0);
+                ctx.lineTo(i, h);
+                ctx.stroke();
+            }
+            for (let i = 0; i < h; i += 25) {
+                ctx.beginPath();
+                ctx.moveTo(0, i);
+                ctx.lineTo(w, i);
+                ctx.stroke();
+            }
+            
+            // Origin point
+            ctx.beginPath();
+            ctx.arc(cx, cy, 8, 0, Math.PI * 2);
+            ctx.fillStyle = colors.gold;
+            ctx.fill();
+            
+            // ζ′ axis (up, to the left)
+            ctx.strokeStyle = colors.accumulated;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(cx, cy);
+            ctx.lineTo(cx - 80, 40);
+            ctx.stroke();
+            // Arrow
+            ctx.beginPath();
+            ctx.moveTo(cx - 80, 40);
+            ctx.lineTo(cx - 70, 55);
+            ctx.lineTo(cx - 90, 50);
+            ctx.closePath();
+            ctx.fillStyle = colors.accumulated;
+            ctx.fill();
+            // Label
+            ctx.font = '16px JetBrains Mono';
+            ctx.fillText("ζ′", cx - 100, 35);
+            ctx.font = '11px JetBrains Mono';
+            ctx.fillStyle = '#7a7670';
+            ctx.fillText("(accumulated)", cx - 130, 55);
+            
+            // ζ axis (diagonal, to upper right)
+            ctx.strokeStyle = colors.immediate;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(cx, cy);
+            ctx.lineTo(cx + 100, cy - 100);
+            ctx.stroke();
+            // Arrow
+            ctx.beginPath();
+            ctx.moveTo(cx + 100, cy - 100);
+            ctx.lineTo(cx + 85, cy - 90);
+            ctx.lineTo(cx + 90, cy - 110);
+            ctx.closePath();
+            ctx.fillStyle = colors.immediate;
+            ctx.fill();
+            // Label
+            ctx.font = '16px JetBrains Mono';
+            ctx.fillText("ζ", cx + 110, cy - 100);
+            ctx.font = '11px JetBrains Mono';
+            ctx.fillStyle = '#7a7670';
+            ctx.fillText("(immediate)", cx + 95, cy - 80);
+            
+            // Y axis (down-left)
+            ctx.strokeStyle = colors.depth;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(cx, cy);
+            ctx.lineTo(cx - 100, h - 30);
+            ctx.stroke();
+            // Arrow
+            ctx.beginPath();
+            ctx.moveTo(cx - 100, h - 30);
+            ctx.lineTo(cx - 90, h - 45);
+            ctx.lineTo(cx - 110, h - 40);
+            ctx.closePath();
+            ctx.fillStyle = colors.depth;
+            ctx.fill();
+            // Label
+            ctx.font = '16px JetBrains Mono';
+            ctx.fillText("Y", cx - 120, h - 25);
+            ctx.font = '11px JetBrains Mono';
+            ctx.fillStyle = '#7a7670';
+            ctx.fillText("(paracava)", cx - 130, h - 5);
+            
+            // X axis (right)
+            ctx.strokeStyle = colors.warmth;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(cx, cy);
+            ctx.lineTo(w - 20, cy);
+            ctx.stroke();
+            // Arrow
+            ctx.beginPath();
+            ctx.moveTo(w - 20, cy);
+            ctx.lineTo(w - 35, cy - 8);
+            ctx.lineTo(w - 35, cy + 8);
+            ctx.closePath();
+            ctx.fillStyle = colors.warmth;
+            ctx.fill();
+            // Label
+            ctx.font = '16px JetBrains Mono';
+            ctx.fillText("X", w - 15, cy - 15);
+            ctx.font = '11px JetBrains Mono';
+            ctx.fillStyle = '#7a7670';
+            ctx.fillText("(paralum)", w - 60, cy + 25);
+            
+            // Title
+            ctx.font = '13px Cormorant Garamond';
+            ctx.fillStyle = '#e8e4dd';
+            ctx.textAlign = 'center';
+            ctx.fillText('Triaxial Map — Four Dimensional Space', w/2, h - 10);
+        }
+        
+        // ============================================
+        // MAIN 4D VISUALIZATION
+        // ============================================
+        
+        function drawMainVisualization() {
+            const canvas = document.getElementById('mainCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            canvas.width = canvas.offsetWidth * 2;
+            canvas.height = 400 * 2;
+            ctx.scale(2, 2);
+            
+            const w = canvas.offsetWidth;
+            const h = 400;
+            const cx = w / 2;
+            const cy = h / 2 + 50;
+            
+            ctx.fillStyle = '#0f0f14';
+            ctx.fillRect(0, 0, w, h);
+            
+            // Grid
+            ctx.strokeStyle = 'rgba(201, 162, 39, 0.06)';
+            ctx.lineWidth = 1;
+            for (let i = -10; i <= 10; i++) {
+                const x1 = cx + i * 30;
+                ctx.beginPath();
+                ctx.moveTo(x1, 0);
+                ctx.lineTo(x1, h);
+                ctx.stroke();
+            }
+            for (let i = -10; i <= 10; i++) {
+                const y1 = cy + i * 30;
+                ctx.beginPath();
+                ctx.moveTo(0, y1);
+                ctx.lineTo(w, y1);
+                ctx.stroke();
+            }
+            
+            // Draw trajectory
+            if (history.length > 1) {
+                // Shadow (just XY)
+                ctx.strokeStyle = 'rgba(201, 162, 39, 0.1)';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                for (let i = 0; i < history.length; i++) {
+                    const p = history[i];
+                    const px = cx + p.x * 50;
+                    const py = cy - p.y * 30;
+                    if (i === 0) ctx.moveTo(px, py);
+                    else ctx.lineTo(px, py);
+                }
+                ctx.stroke();
+                
+                // Main trajectory with height = ζ + ζ′
+                ctx.lineWidth = 2;
+                for (let i = 1; i < history.length; i++) {
+                    const p1 = history[i-1];
+                    const p2 = history[i];
+                    
+                    const height1 = p1.zeta * 30 + p1.zetaPrime * 50;
+                    const height2 = p2.zeta * 30 + p2.zetaPrime * 50;
+                    
+                    const px1 = cx + p1.x * 50;
+                    const py1 = cy - p1.y * 30 - height1;
+                    const px2 = cx + p2.x * 50;
+                    const py2 = cy - p2.y * 30 - height2;
+                    
+                    // Color based on ζ/ζ′ ratio
+                    const ratio = p2.zeta / Math.max(0.1, p2.zetaPrime);
+                    const alpha = 0.3 + (i / history.length) * 0.7;
+                    
+                    if (ratio > 1) {
+                        ctx.strokeStyle = `rgba(255, 107, 157, ${alpha})`; // More immediate
+                    } else {
+                        ctx.strokeStyle = `rgba(107, 157, 255, ${alpha})`; // More accumulated
+                    }
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(px1, py1);
+                    ctx.lineTo(px2, py2);
+                    ctx.stroke();
+                }
+                
+                // Current position
+                const last = history[history.length - 1];
+                const lastHeight = last.zeta * 30 + last.zetaPrime * 50;
+                const lastX = cx + last.x * 50;
+                const lastY = cy - last.y * 30 - lastHeight;
+                
+                // Glow
+                ctx.beginPath();
+                ctx.arc(lastX, lastY, 15, 0, Math.PI * 2);
+                const gradient = ctx.createRadialGradient(lastX, lastY, 0, lastX, lastY, 15);
+                gradient.addColorStop(0, 'rgba(201, 162, 39, 0.5)');
+                gradient.addColorStop(1, 'rgba(201, 162, 39, 0)');
+                ctx.fillStyle = gradient;
+                ctx.fill();
+                
+                // Point
+                ctx.beginPath();
+                ctx.arc(lastX, lastY, 6, 0, Math.PI * 2);
+                ctx.fillStyle = colors.gold;
+                ctx.fill();
+                
+                // Vertical line to shadow
+                ctx.strokeStyle = 'rgba(201, 162, 39, 0.2)';
+                ctx.lineWidth = 1;
+                ctx.setLineDash([4, 4]);
+                ctx.beginPath();
+                ctx.moveTo(lastX, lastY);
+                ctx.lineTo(lastX, cy - last.y * 30);
+                ctx.stroke();
+                ctx.setLineDash([]);
+            }
+            
+            // Axes labels
+            ctx.font = '12px JetBrains Mono';
+            ctx.fillStyle = colors.warmth;
+            ctx.fillText('X →', w - 40, cy + 20);
+            ctx.fillStyle = colors.depth;
+            ctx.fillText('Y ↓', cx + 10, h - 20);
+            ctx.fillStyle = colors.gold;
+            ctx.fillText('height = ζ + ζ′', 20, 30);
+        }
+        
+        // ============================================
+        // ZETA TIME SERIES
+        // ============================================
+        
+        function drawZetaTimeSeries() {
+            const canvas = document.getElementById('zetaCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            canvas.width = canvas.offsetWidth * 2;
+            canvas.height = 250 * 2;
+            ctx.scale(2, 2);
+            
+            const w = canvas.offsetWidth;
+            const h = 250;
+            const padding = 40;
+            
+            ctx.fillStyle = '#0f0f14';
+            ctx.fillRect(0, 0, w, h);
+            
+            // Axes
+            ctx.strokeStyle = 'rgba(201, 162, 39, 0.2)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(padding, padding);
+            ctx.lineTo(padding, h - padding);
+            ctx.lineTo(w - padding, h - padding);
+            ctx.stroke();
+            
+            if (zetaHistory.length < 2) return;
+            
+            const maxVal = Math.max(
+                ...zetaHistory.map(z => z.zeta),
+                ...zetaHistory.map(z => z.zetaPrime),
+                0.5
+            );
+            
+            const xScale = (w - 2 * padding) / Math.max(zetaHistory.length - 1, 1);
+            const yScale = (h - 2 * padding) / maxVal;
+            
+            // Draw ζ′ (accumulated) - area fill
+            ctx.beginPath();
+            ctx.moveTo(padding, h - padding);
+            for (let i = 0; i < zetaHistory.length; i++) {
+                const x = padding + i * xScale;
+                const y = h - padding - zetaHistory[i].zetaPrime * yScale;
+                ctx.lineTo(x, y);
+            }
+            ctx.lineTo(padding + (zetaHistory.length - 1) * xScale, h - padding);
+            ctx.closePath();
+            ctx.fillStyle = 'rgba(107, 157, 255, 0.15)';
+            ctx.fill();
+            
+            // Draw ζ′ line
+            ctx.strokeStyle = colors.accumulated;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            for (let i = 0; i < zetaHistory.length; i++) {
+                const x = padding + i * xScale;
+                const y = h - padding - zetaHistory[i].zetaPrime * yScale;
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+            
+            // Draw ζ (immediate)
+            ctx.strokeStyle = colors.immediate;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            for (let i = 0; i < zetaHistory.length; i++) {
+                const x = padding + i * xScale;
+                const y = h - padding - zetaHistory[i].zeta * yScale;
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+            
+            // Labels
+            ctx.font = '11px JetBrains Mono';
+            ctx.fillStyle = colors.immediate;
+            ctx.fillText('ζ', w - 30, 25);
+            ctx.fillStyle = colors.accumulated;
+            ctx.fillText("ζ′", w - 30, 42);
+        }
+        
+        // ============================================
+        // PHASE SPACE
+        // ============================================
+        
+        function drawPhaseSpace() {
+            const canvas = document.getElementById('phaseCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            canvas.width = canvas.offsetWidth * 2;
+            canvas.height = 250 * 2;
+            ctx.scale(2, 2);
+            
+            const w = canvas.offsetWidth;
+            const h = 250;
+            const padding = 40;
+            
+            ctx.fillStyle = '#0f0f14';
+            ctx.fillRect(0, 0, w, h);
+            
+            // Axes
+            ctx.strokeStyle = 'rgba(201, 162, 39, 0.2)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(padding, padding);
+            ctx.lineTo(padding, h - padding);
+            ctx.lineTo(w - padding, h - padding);
+            ctx.stroke();
+            
+            // Labels
+            ctx.font = '11px JetBrains Mono';
+            ctx.fillStyle = colors.immediate;
+            ctx.fillText('ζ →', w - 40, h - 20);
+            ctx.fillStyle = colors.accumulated;
+            ctx.save();
+            ctx.translate(15, h/2);
+            ctx.rotate(-Math.PI/2);
+            ctx.fillText("ζ′ →", 0, 0);
+            ctx.restore();
+            
+            if (phaseHistory.length < 2) return;
+            
+            const maxZeta = Math.max(...phaseHistory.map(p => p.zeta), 0.5);
+            const maxZetaPrime = Math.max(...phaseHistory.map(p => p.zetaPrime), 0.5);
+            
+            const xScale = (w - 2 * padding) / maxZeta;
+            const yScale = (h - 2 * padding) / maxZetaPrime;
+            
+            // Draw trajectory
+            ctx.lineWidth = 1.5;
+            for (let i = 1; i < phaseHistory.length; i++) {
+                const p1 = phaseHistory[i-1];
+                const p2 = phaseHistory[i];
+                
+                const x1 = padding + p1.zeta * xScale;
+                const y1 = h - padding - p1.zetaPrime * yScale;
+                const x2 = padding + p2.zeta * xScale;
+                const y2 = h - padding - p2.zetaPrime * yScale;
+                
+                const alpha = 0.2 + (i / phaseHistory.length) * 0.8;
+                ctx.strokeStyle = `rgba(201, 162, 39, ${alpha})`;
+                
+                ctx.beginPath();
+                ctx.moveTo(x1, y1);
+                ctx.lineTo(x2, y2);
+                ctx.stroke();
+            }
+            
+            // Current point
+            if (phaseHistory.length > 0) {
+                const last = phaseHistory[phaseHistory.length - 1];
+                const x = padding + last.zeta * xScale;
+                const y = h - padding - last.zetaPrime * yScale;
+                
+                ctx.beginPath();
+                ctx.arc(x, y, 5, 0, Math.PI * 2);
+                ctx.fillStyle = colors.gold;
+                ctx.fill();
+            }
+        }
+        
+        // ============================================
+        // SIMULATION
+        // ============================================
+        
+        function computeImmediateSlope(parabrill, parascint) {
+            return parabrill * parascint * 2.0;
+        }
+        
+        function computeAccumulatedSlope(paracava, paraflu) {
+            return (paracava + paraflu) / 2.0;
+        }
+        
+        function evolve() {
+            const dt = 0.05;
+            
+            // Compute immediate slope
+            const newZeta = computeImmediateSlope(operators.parabrill, operators.parascint);
+            
+            // ζ′ accumulates from ζ
+            const sedimentationRate = 0.12;
+            const zetaPrimeDelta = position.zeta * sedimentationRate * dt;
+            const deepContribution = computeAccumulatedSlope(operators.paracava, operators.paraflu) * dt * 0.2;
+            
+            // Update position
+            position.x += operators.paralum * dt * 0.8;
+            position.y += operators.paracava * dt * 0.4;
+            position.zeta = newZeta;
+            position.zetaPrime += zetaPrimeDelta + deepContribution;
+            
+            // Store history
+            history.push({...position});
+            if (history.length > 500) history.shift();
+            
+            zetaHistory.push({ zeta: position.zeta, zetaPrime: position.zetaPrime });
+            if (zetaHistory.length > 200) zetaHistory.shift();
+            
+            phaseHistory.push({ zeta: position.zeta, zetaPrime: position.zetaPrime });
+            if (phaseHistory.length > 500) phaseHistory.shift();
+            
+            // Update stats
+            document.getElementById('currentZeta').textContent = position.zeta.toFixed(2);
+            document.getElementById('currentZetaPrime').textContent = position.zetaPrime.toFixed(2);
+            
+            const coherence = Math.min(1, position.zetaPrime / Math.max(0.1, position.zeta));
+            document.getElementById('coherence').textContent = coherence.toFixed(2);
+            
+            const sedimentation = position.zetaPrime > 0 ? (position.zetaPrime / (position.zetaPrime + position.zeta)).toFixed(2) : '0.00';
+            document.getElementById('sedimentation').textContent = sedimentation;
+        }
+        
+        function animate() {
+            if (!isPaused) {
+                evolve();
+            }
+            
+            drawMainVisualization();
+            drawZetaTimeSeries();
+            drawPhaseSpace();
+            
+            time++;
+            requestAnimationFrame(animate);
+        }
+        
+        // ============================================
+        // EVENT HANDLERS
+        // ============================================
+        
+        ['paralum', 'paracava', 'parabrill', 'parascint', 'paraflu'].forEach(op => {
+            const slider = document.getElementById(op);
+            slider.addEventListener('input', (e) => {
+                operators[op] = parseFloat(e.target.value);
+                document.getElementById(op + 'Val').textContent = operators[op].toFixed(2);
+            });
+        });
+        
+        document.getElementById('resetBtn').addEventListener('click', () => {
+            position = { x: 0, y: 0, zeta: 0, zetaPrime: 0 };
+            history = [];
+            zetaHistory = [];
+            phaseHistory = [];
+        });
+        
+        document.getElementById('pauseBtn').addEventListener('click', () => {
+            isPaused = !isPaused;
+            document.getElementById('pauseBtn').textContent = isPaused ? 'Resume' : 'Pause';
+        });
+        
+        // ============================================
+        // INITIALIZE
+        // ============================================
+        
+        drawCoordinateDiagram();
+        animate();
+    </script>
+</body>
+</html>

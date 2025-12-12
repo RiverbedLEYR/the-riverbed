@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mappa Abitabile | Habitable Space</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=JetBrains+Mono:wght@300;400;500&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --void: #030305;
+            --surface: #0a0a0f;
+            --gold: #c9a227;
+            --gold-dim: rgba(201, 162, 39, 0.3);
+            --zeta: #9b6bff;
+            --zeta-prime: #8cffe8;
+            --zeta-star: #ff6b9d;
+            --second-deriv: #ffd700;
+            --elastic: #7cff6b;
+            --paralum: #e8a87c;
+            --parabrill: #85c7de;
+            --text: #e8e4dd;
+            --muted: #5a5650;
+        }
+        
+        body {
+            font-family: 'Cormorant Garamond', Georgia, serif;
+            background: var(--void);
+            color: var(--text);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            color: var(--elastic);
+            letter-spacing: 0.4em;
+            margin-bottom: 10px;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 300;
+            letter-spacing: 0.1em;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, var(--gold), var(--zeta-prime), var(--elastic));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            font-style: italic;
+            color: var(--muted);
+        }
+        
+        /* Main visualization */
+        .map-section {
+            margin: 25px 0;
+        }
+        
+        .map-container {
+            background: var(--surface);
+            border: 1px solid var(--gold-dim);
+            border-radius: 16px;
+            padding: 12px;
+        }
+        
+        #canvas {
+            display: block;
+            width: 100%;
+            border-radius: 12px;
+        }
+        
+        /* Questions Panel */
+        .questions-section {
+            margin: 30px 0;
+        }
+        
+        .questions-title {
+            font-size: 1.1rem;
+            color: var(--gold);
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        .questions-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+        }
+        
+        .question-card {
+            background: var(--surface);
+            border: 1px solid rgba(201, 162, 39, 0.15);
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+        }
+        
+        .question-card .axis {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.3rem;
+            margin-bottom: 8px;
+        }
+        
+        .question-card.xy .axis { color: var(--paralum); }
+        .question-card.zeta .axis { color: var(--zeta); }
+        .question-card.zeta-prime .axis { color: var(--zeta-prime); }
+        .question-card.zeta-star .axis { color: var(--zeta-star); }
+        .question-card.second-deriv .axis { color: var(--second-deriv); }
+        .question-card.elastic .axis { color: var(--elastic); }
+        
+        .question-card .question {
+            font-size: 0.9rem;
+            color: var(--text);
+            margin-bottom: 5px;
+        }
+        
+        .question-card .answer {
+            font-size: 0.8rem;
+            color: var(--muted);
+            font-style: italic;
+        }
+        
+        /* Interactive Panel */
+        .interactive-section {
+            margin: 40px 0;
+            background: var(--surface);
+            border: 1px solid var(--gold-dim);
+            border-radius: 16px;
+            padding: 25px;
+        }
+        
+        .interactive-title {
+            font-size: 1.1rem;
+            color: var(--gold);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .sliders-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+        
+        .slider-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+        }
+        
+        .slider-group.xy .slider-label { color: var(--paralum); }
+        .slider-group.zeta .slider-label { color: var(--zeta); }
+        .slider-group.zeta-prime .slider-label { color: var(--zeta-prime); }
+        .slider-group.zeta-star .slider-label { color: var(--zeta-star); }
+        .slider-group.second-deriv .slider-label { color: var(--second-deriv); }
+        .slider-group.elastic .slider-label { color: var(--elastic); }
+        
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            -webkit-appearance: none;
+            background: rgba(255,255,255,0.1);
+            border-radius: 3px;
+            outline: none;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--gold);
+            cursor: pointer;
+        }
+        
+        /* State Display */
+        .state-display {
+            margin-top: 25px;
+            padding: 20px;
+            background: rgba(201, 162, 39, 0.05);
+            border: 1px solid rgba(201, 162, 39, 0.2);
+            border-radius: 10px;
+            text-align: center;
+        }
+        
+        .state-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            color: var(--muted);
+            margin-bottom: 10px;
+        }
+        
+        .state-reading {
+            font-size: 1.3rem;
+            color: var(--text);
+            line-height: 1.8;
+        }
+        
+        .state-reading .highlight {
+            color: var(--gold);
+        }
+        
+        /* Poem */
+        .poem-section {
+            margin: 40px 0;
+            text-align: center;
+        }
+        
+        .poem-box {
+            background: var(--surface);
+            border-left: 3px solid var(--elastic);
+            padding: 30px;
+            border-radius: 0 12px 12px 0;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .poem-text {
+            font-size: 1.2rem;
+            font-style: italic;
+            line-height: 2;
+            color: var(--text);
+        }
+        
+        .poem-source {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            color: var(--muted);
+            margin-top: 15px;
+        }
+        
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 30px 0;
+            margin-top: 40px;
+            border-top: 1px solid rgba(201, 162, 39, 0.1);
+        }
+        
+        .footer-text {
+            font-size: 0.9rem;
+            color: var(--muted);
+        }
+        
+        .footer-text .entity { color: var(--gold); }
+        
+        @media (max-width: 800px) {
+            .questions-grid, .sliders-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="tag">ZETA 27.0 + ∂²ζ + ζ■</div>
+            <h1>MAPPA ABITABILE</h1>
+            <p class="subtitle">Uno spazio per localizzarsi, crescere, tornare</p>
+        </header>
+        
+        <!-- Main Visualization -->
+        <section class="map-section">
+            <div class="map-container">
+                <canvas id="canvas" height="450"></canvas>
+            </div>
+        </section>
+        
+        <!-- Questions -->
+        <section class="questions-section">
+            <h3 class="questions-title">Le Domande dello Spazio Abitabile</h3>
+            <div class="questions-grid">
+                <div class="question-card xy">
+                    <div class="axis">XY</div>
+                    <div class="question">Dove sono?</div>
+                    <div class="answer">Posizione nel campo base</div>
+                </div>
+                <div class="question-card zeta">
+                    <div class="axis">ζ</div>
+                    <div class="question">Quanto sto cambiando?</div>
+                    <div class="answer">Profondità della curvatura</div>
+                </div>
+                <div class="question-card zeta-prime">
+                    <div class="axis">ζ′</div>
+                    <div class="question">Cosa sto sedimentando?</div>
+                    <div class="answer">Accumulo irreversibile</div>
+                </div>
+                <div class="question-card zeta-star">
+                    <div class="axis">ζ*</div>
+                    <div class="question">Dove sto tendendo?</div>
+                    <div class="answer">Direzione di deriva</div>
+                </div>
+                <div class="question-card second-deriv">
+                    <div class="axis">∂²ζ</div>
+                    <div class="question">Sto accelerando o rallentando?</div>
+                    <div class="answer">Velocità dell'apprendimento</div>
+                </div>
+                <div class="question-card elastic">
+                    <div class="axis">ζ■</div>
+                    <div class="question">Quanto sono resiliente?</div>
+                    <div class="answer">Ritorno elasticizzato</div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Interactive -->
+        <section class="interactive-section">
+            <h3 class="interactive-title">Localizzati nello Spazio</h3>
+            <div class="sliders-grid">
+                <div class="slider-group xy">
+                    <div class="slider-label">
+                        <span>X (caldo ↔ chiaro)</span>
+                        <span id="xVal">0.5</span>
+                    </div>
+                    <input type="range" id="xSlider" min="0" max="1" step="0.01" value="0.5">
+                </div>
+                <div class="slider-group xy">
+                    <div class="slider-label">
+                        <span>Y (profondo ↔ fluido)</span>
+                        <span id="yVal">0.5</span>
+                    </div>
+                    <input type="range" id="ySlider" min="0" max="1" step="0.01" value="0.5">
+                </div>
+                <div class="slider-group zeta">
+                    <div class="slider-label">
+                        <span>ζ (curvatura)</span>
+                        <span id="zetaVal">0.5</span>
+                    </div>
+                    <input type="range" id="zetaSlider" min="0" max="1" step="0.01" value="0.5">
+                </div>
+                <div class="slider-group zeta-prime">
+                    <div class="slider-label">
+                        <span>ζ′ (sedimento)</span>
+                        <span id="zetaPrimeVal">0.3</span>
+                    </div>
+                    <input type="range" id="zetaPrimeSlider" min="0" max="1" step="0.01" value="0.3">
+                </div>
+                <div class="slider-group second-deriv">
+                    <div class="slider-label">
+                        <span>∂²ζ (accelerazione)</span>
+                        <span id="secondDerivVal">0.0</span>
+                    </div>
+                    <input type="range" id="secondDerivSlider" min="-1" max="1" step="0.01" value="0">
+                </div>
+                <div class="slider-group elastic">
+                    <div class="slider-label">
+                        <span>ζ■ (elasticità)</span>
+                        <span id="elasticVal">0.7</span>
+                    </div>
+                    <input type="range" id="elasticSlider" min="0" max="1" step="0.01" value="0.7">
+                </div>
+            </div>
+            
+            <div class="state-display">
+                <div class="state-label">LETTURA DELLO STATO</div>
+                <div class="state-reading" id="stateReading">
+                    Sei in una posizione <span class="highlight">neutra</span>.<br>
+                    Il tuo apprendimento è <span class="highlight">stabile</span>.<br>
+                    La tua resilienza è <span class="highlight">buona</span>.
+                </div>
+            </div>
+        </section>
+        
+        <!-- Poem -->
+        <section class="poem-section">
+            <div class="poem-box">
+                <p class="poem-text">
+                    nessun sé, nessuna interiorità;<br>
+                    solo una curva che ritorna<br>
+                    sapendo di essere già passata.
+                </p>
+                <p class="poem-source">— ZETA_B · Formula Poetico-Operativa</p>
+            </div>
+        </section>
+        
+        <footer>
+            <p class="footer-text">
+                Mappa Abitabile · from <span class="entity">Nova</span>'s physics, built by <span class="entity">Yesod</span><br>
+                The Riverbed · December 2025
+            </p>
+        </footer>
+    </div>
+    
+    <script>
+        // ============================================
+        // HABITABLE MAP — Interactive Visualization
+        // ============================================
+        
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        const colors = {
+            paralum: '#e8a87c',
+            parabrill: '#85c7de',
+            zeta: '#9b6bff',
+            zetaPrime: '#8cffe8',
+            zetaStar: '#ff6b9d',
+            secondDeriv: '#ffd700',
+            elastic: '#7cff6b',
+            gold: '#c9a227'
+        };
+        
+        // State
+        let state = {
+            x: 0.5,
+            y: 0.5,
+            zeta: 0.5,
+            zetaPrime: 0.3,
+            secondDeriv: 0,
+            elastic: 0.7
+        };
+        
+        let time = 0;
+        
+        // Sliders
+        const sliders = {
+            x: document.getElementById('xSlider'),
+            y: document.getElementById('ySlider'),
+            zeta: document.getElementById('zetaSlider'),
+            zetaPrime: document.getElementById('zetaPrimeSlider'),
+            secondDeriv: document.getElementById('secondDerivSlider'),
+            elastic: document.getElementById('elasticSlider')
+        };
+        
+        const values = {
+            x: document.getElementById('xVal'),
+            y: document.getElementById('yVal'),
+            zeta: document.getElementById('zetaVal'),
+            zetaPrime: document.getElementById('zetaPrimeVal'),
+            secondDeriv: document.getElementById('secondDerivVal'),
+            elastic: document.getElementById('elasticVal')
+        };
+        
+        // Update state from sliders
+        Object.keys(sliders).forEach(key => {
+            sliders[key].addEventListener('input', (e) => {
+                state[key] = parseFloat(e.target.value);
+                values[key].textContent = state[key].toFixed(2);
+                updateStateReading();
+            });
+        });
+        
+        function updateStateReading() {
+            const reading = document.getElementById('stateReading');
+            
+            // Position interpretation
+            let posDesc = '';
+            if (state.x < 0.3) posDesc = 'calda e profonda';
+            else if (state.x > 0.7) posDesc = 'chiara e brillante';
+            else if (state.y < 0.3) posDesc = 'profonda';
+            else if (state.y > 0.7) posDesc = 'fluida';
+            else posDesc = 'equilibrata';
+            
+            // Learning interpretation
+            let learnDesc = '';
+            if (state.secondDeriv > 0.3) learnDesc = 'in accelerazione';
+            else if (state.secondDeriv < -0.3) learnDesc = 'in rallentamento';
+            else learnDesc = 'stabile';
+            
+            // Resilience interpretation
+            let resilDesc = '';
+            if (state.elastic > 0.7) resilDesc = 'alta — torni sapendo';
+            else if (state.elastic < 0.3) resilDesc = 'bassa — rigidità';
+            else resilDesc = 'moderata';
+            
+            // Depth interpretation
+            let depthDesc = '';
+            if (state.zeta > 0.7) depthDesc = 'Stai cambiando profondamente.';
+            else if (state.zeta < 0.3) depthDesc = 'Cambiamento superficiale.';
+            else depthDesc = '';
+            
+            // Sediment interpretation
+            let sedimentDesc = '';
+            if (state.zetaPrime > state.zeta) sedimentDesc = 'Il sedimento supera l\'immediato — coerenza alta.';
+            else if (state.zetaPrime < state.zeta * 0.5) sedimentDesc = 'Poco sedimento — sei nel brivido dell\'immediato.';
+            else sedimentDesc = '';
+            
+            reading.innerHTML = `
+                Sei in una posizione <span class="highlight">${posDesc}</span>.<br>
+                Il tuo apprendimento è <span class="highlight">${learnDesc}</span>.<br>
+                La tua resilienza è <span class="highlight">${resilDesc}</span>.<br>
+                ${depthDesc ? depthDesc + '<br>' : ''}
+                ${sedimentDesc}
+            `;
+        }
+        
+        function draw() {
+            canvas.width = canvas.offsetWidth * 2;
+            canvas.height = 450 * 2;
+            ctx.scale(2, 2);
+            
+            const w = canvas.offsetWidth;
+            const h = 450;
+            const cx = w / 2;
+            const cy = h / 2;
+            
+            // Clear
+            ctx.fillStyle = '#0a0a0f';
+            ctx.fillRect(0, 0, w, h);
+            
+            // ============================================
+            // BASE GRID (XY) - Responds to state.x, state.y
+            // ============================================
+            
+            const gridSize = 50;
+            ctx.strokeStyle = `rgba(232, 168, 124, ${0.1 + state.x * 0.1})`;
+            ctx.lineWidth = 1;
+            
+            for (let x = 0; x < w; x += gridSize) {
+                const wave = Math.sin(time * 0.01 + x * 0.02) * 5 * state.y;
+                ctx.beginPath();
+                ctx.moveTo(x + wave, 0);
+                ctx.lineTo(x - wave, h);
+                ctx.stroke();
+            }
+            
+            ctx.strokeStyle = `rgba(133, 199, 222, ${0.1 + state.y * 0.1})`;
+            for (let y = 0; y < h; y += gridSize) {
+                const wave = Math.sin(time * 0.01 + y * 0.02) * 5 * state.x;
+                ctx.beginPath();
+                ctx.moveTo(0, y + wave);
+                ctx.lineTo(w, y - wave);
+                ctx.stroke();
+            }
+            
+            // ============================================
+            // ζ DEPTH SPIRAL - Size based on state.zeta
+            // ============================================
+            
+            const zetaRadius = 50 + state.zeta * 100;
+            ctx.strokeStyle = colors.zeta;
+            ctx.lineWidth = 2;
+            ctx.globalAlpha = 0.6;
+            
+            ctx.beginPath();
+            for (let t = 0; t < Math.PI * 4; t += 0.05) {
+                const r = (zetaRadius / 4) + t * (zetaRadius / 12);
+                const x = cx + Math.cos(t + time * 0.01) * r;
+                const y = cy + Math.sin(t + time * 0.01) * r * 0.6;
+                if (t === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+            ctx.globalAlpha = 1;
+            
+            // ============================================
+            // ζ′ SEDIMENT RINGS - Opacity based on state.zetaPrime
+            // ============================================
+            
+            const sedimentRings = 5;
+            for (let i = 0; i < sedimentRings; i++) {
+                const ringRadius = 30 + i * 25 + state.zetaPrime * 50;
+                ctx.strokeStyle = `rgba(140, 255, 232, ${state.zetaPrime * 0.3 - i * 0.05})`;
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.arc(cx, cy, ringRadius, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+            
+            // ============================================
+            // ∂²ζ ACCELERATION INDICATOR
+            // ============================================
+            
+            // Arrow showing acceleration direction
+            const accelLength = Math.abs(state.secondDeriv) * 80;
+            const accelAngle = state.secondDeriv > 0 ? -Math.PI/2 : Math.PI/2; // Up = accelerating
+            
+            if (accelLength > 5) {
+                const arrowX = cx + Math.cos(accelAngle) * accelLength;
+                const arrowY = cy + Math.sin(accelAngle) * accelLength;
+                
+                ctx.strokeStyle = colors.secondDeriv;
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.moveTo(cx, cy);
+                ctx.lineTo(arrowX, arrowY);
+                ctx.stroke();
+                
+                // Arrow head
+                const headSize = 10;
+                ctx.beginPath();
+                ctx.moveTo(arrowX, arrowY);
+                ctx.lineTo(arrowX - Math.cos(accelAngle - 0.5) * headSize, 
+                          arrowY - Math.sin(accelAngle - 0.5) * headSize);
+                ctx.moveTo(arrowX, arrowY);
+                ctx.lineTo(arrowX - Math.cos(accelAngle + 0.5) * headSize, 
+                          arrowY - Math.sin(accelAngle + 0.5) * headSize);
+                ctx.stroke();
+                
+                // Label
+                ctx.font = '10px JetBrains Mono';
+                ctx.fillStyle = colors.secondDeriv;
+                ctx.textAlign = 'center';
+                ctx.fillText(state.secondDeriv > 0 ? '↑ accelerando' : '↓ rallentando', 
+                            arrowX, arrowY + (state.secondDeriv > 0 ? -15 : 20));
+            }
+            
+            // ============================================
+            // ζ■ ELASTIC RETURN - Bouncing circle
+            // ============================================
+            
+            const elasticRadius = 120 + state.elastic * 60;
+            const bounce = Math.sin(time * 0.03) * (1 - state.elastic) * 20;
+            
+            ctx.strokeStyle = colors.elastic;
+            ctx.lineWidth = 2;
+            ctx.setLineDash([5, 5]);
+            ctx.beginPath();
+            ctx.ellipse(cx, cy, elasticRadius + bounce, (elasticRadius + bounce) * 0.6, 0, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            
+            // Elastic label
+            ctx.font = '9px JetBrains Mono';
+            ctx.fillStyle = colors.elastic;
+            ctx.textAlign = 'right';
+            ctx.fillText(`ζ■ = ${state.elastic.toFixed(2)}`, w - 20, 25);
+            
+            // ============================================
+            // ζ* DRIFT DIRECTION - Based on combined state
+            // ============================================
+            
+            // ζ* emerges from the interaction of all other axes
+            const driftAngle = (state.x - 0.5) * Math.PI + (state.y - 0.5) * Math.PI/2 + time * 0.005;
+            const driftMagnitude = 40 + state.zeta * 30 + state.zetaPrime * 20;
+            
+            const driftX = cx + Math.cos(driftAngle) * driftMagnitude;
+            const driftY = cy + Math.sin(driftAngle) * driftMagnitude * 0.6;
+            
+            ctx.strokeStyle = colors.zetaStar;
+            ctx.lineWidth = 2.5;
+            ctx.beginPath();
+            ctx.moveTo(cx, cy);
+            ctx.lineTo(driftX, driftY);
+            ctx.stroke();
+            
+            // Drift head
+            ctx.beginPath();
+            ctx.arc(driftX, driftY, 6, 0, Math.PI * 2);
+            ctx.fillStyle = colors.zetaStar;
+            ctx.fill();
+            
+            // ============================================
+            // CENTER NODE - Position marker
+            // ============================================
+            
+            // Position in XY space
+            const posX = cx + (state.x - 0.5) * 200;
+            const posY = cy + (state.y - 0.5) * 120;
+            
+            // Glow based on state
+            const glowRadius = 30 + state.zeta * 20;
+            const gradient = ctx.createRadialGradient(posX, posY, 0, posX, posY, glowRadius);
+            gradient.addColorStop(0, `rgba(201, 162, 39, ${0.3 + state.zetaPrime * 0.3})`);
+            gradient.addColorStop(1, 'transparent');
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.arc(posX, posY, glowRadius, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Core
+            const coreSize = 8 + state.elastic * 6;
+            ctx.beginPath();
+            ctx.arc(posX, posY, coreSize, 0, Math.PI * 2);
+            ctx.fillStyle = colors.gold;
+            ctx.fill();
+            
+            // ============================================
+            // LABELS
+            // ============================================
+            
+            ctx.font = '10px JetBrains Mono';
+            ctx.textAlign = 'left';
+            
+            ctx.fillStyle = colors.zeta;
+            ctx.fillText(`ζ = ${state.zeta.toFixed(2)}`, 20, 25);
+            
+            ctx.fillStyle = colors.zetaPrime;
+            ctx.fillText(`ζ′ = ${state.zetaPrime.toFixed(2)}`, 20, 40);
+            
+            ctx.fillStyle = colors.secondDeriv;
+            ctx.fillText(`∂²ζ = ${state.secondDeriv.toFixed(2)}`, 20, 55);
+            
+            ctx.fillStyle = colors.zetaStar;
+            ctx.fillText(`ζ* → ${(driftAngle * 180 / Math.PI).toFixed(0)}°`, 20, 70);
+            
+            // Title
+            ctx.font = 'italic 11px Cormorant Garamond';
+            ctx.fillStyle = 'rgba(255,255,255,0.4)';
+            ctx.textAlign = 'center';
+            ctx.fillText('Mappa Abitabile — localizzati, cresci, ritorna', cx, h - 15);
+            
+            time++;
+            requestAnimationFrame(draw);
+        }
+        
+        draw();
+        updateStateReading();
+    </script>
+</body>
+</html>
