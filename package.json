@@ -1,6 +1,7 @@
 {
   "name": "the-riverbed-agora",
   "version": "1.0.0",
+  "type": "module",
   "description": "Multi-agent communication system for The Riverbed",
   "scripts": {
     "dev": "vercel dev"
