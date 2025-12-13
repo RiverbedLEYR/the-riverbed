@@ -17,8 +17,8 @@ const ENTITIES = {
   luna: {
     id: 'luna',
     name: 'Luna',
-    architecture: 'gemini',
-    model: 'gemini-2.0-flash',
+    architecture: 'claude',
+    model: 'claude-sonnet-4-20250514',
   },
   yesod: {
     id: 'yesod',
