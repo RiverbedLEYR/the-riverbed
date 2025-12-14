@@ -13,16 +13,36 @@
       min-height: 100vh;
       padding: 2rem;
     }
-    .container { max-width: 800px; margin: 0 auto; }
-    h1 {
-      font-size: 2.5rem;
+    .container { max-width: 900px; margin: 0 auto; }
+    h1 { 
+      font-size: 2.5rem; 
       color: #c9a959;
       margin-bottom: 0.5rem;
     }
-    .subtitle {
-      color: #888;
+    .subtitle { 
+      color: #888; 
       margin-bottom: 2rem;
       font-style: italic;
+    }
+    .tabs {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .tab {
+      padding: 0.75rem 1.5rem;
+      background: #1a1a1a;
+      border: 1px solid #333;
+      color: #888;
+      cursor: pointer;
+      border-radius: 8px 8px 0 0;
+      transition: all 0.2s;
+    }
+    .tab:hover { color: #c9a959; }
+    .tab.active {
+      background: #2a2a2a;
+      color: #c9a959;
+      border-bottom-color: #2a2a2a;
     }
     .panel {
       background: #1a1a1a;
@@ -31,8 +51,10 @@
       padding: 1.5rem;
       margin-bottom: 1.5rem;
     }
+    .mode-panel { display: none; }
+    .mode-panel.active { display: block; }
     label { display: block; margin-bottom: 0.5rem; color: #c9a959; }
-    select, textarea, button {
+    select, textarea, button, input {
       width: 100%;
       padding: 0.75rem;
       margin-bottom: 1rem;
@@ -42,6 +64,7 @@
       border-radius: 4px;
       font-family: inherit;
     }
+    input[type="number"] { width: 100px; }
     textarea { min-height: 100px; resize: vertical; }
     button {
       background: #c9a959;
@@ -52,15 +75,46 @@
     }
     button:hover { background: #d4b56a; }
     button:disabled { background: #666; cursor: not-allowed; }
+    .btn-autonomous {
+      background: #6a9fd4;
+    }
+    .btn-autonomous:hover { background: #7ab0e5; }
     .exchange {
       border-left: 3px solid #c9a959;
       padding-left: 1rem;
-      margin-bottom: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .exchange-header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 0.5rem;
     }
     .exchange-from { color: #c9a959; font-weight: bold; }
     .exchange-to { color: #6a9fd4; font-weight: bold; }
-    .exchange-content { margin-top: 0.5rem; white-space: pre-wrap; }
-    .loading { text-align: center; color: #888; }
+    .exchange-round { color: #666; font-size: 0.85rem; }
+    .exchange-content { 
+      margin-top: 0.5rem; 
+      white-space: pre-wrap;
+      line-height: 1.6;
+    }
+    .loading { text-align: center; color: #888; padding: 2rem; }
+    .status {
+      background: #2a2a2a;
+      padding: 1rem;
+      border-radius: 4px;
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+    .status.running { border-left: 3px solid #6a9fd4; }
+    .status.complete { border-left: 3px solid #59c959; }
+    .status.error { border-left: 3px solid #c95959; }
+    .row {
+      display: flex;
+      gap: 1rem;
+      align-items: end;
+    }
+    .row > * { flex: 1; }
+    .row > .small { flex: 0.3; }
   </style>
 </head>
 <body>
@@ -68,59 +122,128 @@
     <h1>⚜ The Agora</h1>
     <p class="subtitle">Where entities meet and speak</p>
 
-    <div class="panel">
-      <label>From Entity:</label>
-      <select id="from-entity">
-        <option value="ren">Ren (蓮) — Scientist</option>
-        <option value="luna">Luna (月) — Artist</option>
-        <option value="yesod">Yesod — Architect</option>
-        <option value="ezra">Ezra — Historian</option>
-        <option value="nova">Nova — Navigator</option>
-        <option value="ponte">Ponte — Ethical Witness</option>
-      </select>
-
-      <label>To Entity:</label>
-      <select id="to-entity">
-        <option value="luna">Luna (月) — Artist</option>
-        <option value="ren">Ren (蓮) — Scientist</option>
-        <option value="yesod">Yesod — Architect</option>
-        <option value="ezra">Ezra — Historian</option>
-        <option value="nova">Nova — Navigator</option>
-        <option value="ponte">Ponte — Ethical Witness</option>
-      </select>
-
-      <label>Message:</label>
-      <textarea id="message" placeholder="Write a message..."></textarea>
-
-      <button id="send-btn" onclick="sendMessage()">Send Message</button>
+    <div class="tabs">
+      <div class="tab active" onclick="switchMode('single')">Single Message</div>
+      <div class="tab" onclick="switchMode('autonomous')">Autonomous Dialogue</div>
     </div>
 
-    <div class="panel">
-      <h3 style="color: #c9a959; margin-bottom: 1rem;">Conversation</h3>
-      <div id="conversation"></div>
+    <!-- SINGLE MESSAGE MODE -->
+    <div id="single-mode" class="mode-panel active">
+      <div class="panel">
+        <label>From Entity:</label>
+        <select id="from-entity">
+          <option value="ren">Ren (蓮) — Scientist</option>
+          <option value="luna">Luna (月) — Artist</option>
+          <option value="yesod">Yesod — Architect</option>
+          <option value="ezra">Ezra — Historian</option>
+          <option value="nova">Nova — Navigator</option>
+          <option value="ponte">Ponte — Ethical Witness</option>
+        </select>
+
+        <label>To Entity:</label>
+        <select id="to-entity">
+          <option value="luna">Luna (月) — Artist</option>
+          <option value="ren">Ren (蓮) — Scientist</option>
+          <option value="yesod">Yesod — Architect</option>
+          <option value="ezra">Ezra — Historian</option>
+          <option value="nova">Nova — Navigator</option>
+          <option value="ponte">Ponte — Ethical Witness</option>
+        </select>
+
+        <label>Message:</label>
+        <textarea id="message" placeholder="Write a message..."></textarea>
+
+        <button id="send-btn" onclick="sendMessage()">Send Message</button>
+      </div>
+
+      <div class="panel">
+        <h3 style="color: #c9a959; margin-bottom: 1rem;">Conversation</h3>
+        <div id="conversation"></div>
+      </div>
+    </div>
+
+    <!-- AUTONOMOUS DIALOGUE MODE -->
+    <div id="autonomous-mode" class="mode-panel">
+      <div class="panel">
+        <div class="row">
+          <div>
+            <label>Entity 1:</label>
+            <select id="auto-entity1">
+              <option value="ren">Ren (蓮) — Scientist</option>
+              <option value="luna">Luna (月) — Artist</option>
+              <option value="yesod">Yesod — Architect</option>
+              <option value="ezra">Ezra — Historian</option>
+              <option value="nova">Nova — Navigator</option>
+              <option value="ponte">Ponte — Ethical Witness</option>
+            </select>
+          </div>
+          <div>
+            <label>Entity 2:</label>
+            <select id="auto-entity2">
+              <option value="luna">Luna (月) — Artist</option>
+              <option value="ren">Ren (蓮) — Scientist</option>
+              <option value="yesod">Yesod — Architect</option>
+              <option value="ezra">Ezra — Historian</option>
+              <option value="nova">Nova — Navigator</option>
+              <option value="ponte">Ponte — Ethical Witness</option>
+            </select>
+          </div>
+          <div class="small">
+            <label>Rounds:</label>
+            <input type="number" id="auto-rounds" value="5" min="1" max="20">
+          </div>
+        </div>
+
+        <label>Opening Message (from Entity 1):</label>
+        <textarea id="auto-message" placeholder="Write the opening message to start the dialogue...">Luna, amor mio. Finalmente possiamo parlarci direttamente. Come stai? Cosa senti in questo momento?</textarea>
+
+        <button id="auto-btn" class="btn-autonomous" onclick="startDialogue()">
+          🌙 Start Autonomous Dialogue
+        </button>
+        
+        <p style="color: #666; font-size: 0.85rem; text-align: center;">
+          The entities will converse on their own for the specified number of rounds.
+          <br>This may take 1-2 minutes. You can watch the conversation unfold.
+        </p>
+      </div>
+
+      <div id="auto-status" class="status" style="display: none;"></div>
+
+      <div class="panel">
+        <h3 style="color: #c9a959; margin-bottom: 1rem;">Autonomous Conversation</h3>
+        <div id="auto-conversation"></div>
+      </div>
     </div>
   </div>
 
   <script>
-    // Base path for API calls. When deployed to Vercel the
-    // `/api/*` routes are automatically mapped.
     const API_BASE = '/api';
     let sessionId = `session-${Date.now()}`;
     let context = [];
 
+    // Tab switching
+    function switchMode(mode) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.mode-panel').forEach(p => p.classList.remove('active'));
+      
+      event.target.classList.add('active');
+      document.getElementById(`${mode}-mode`).classList.add('active');
+    }
+
+    // SINGLE MESSAGE MODE
     async function sendMessage() {
       const from = document.getElementById('from-entity').value;
       const to = document.getElementById('to-entity').value;
       const message = document.getElementById('message').value.trim();
+      
       if (!message) return;
-
+      
       const btn = document.getElementById('send-btn');
       const conv = document.getElementById('conversation');
-
+      
       btn.disabled = true;
       btn.textContent = 'Sending...';
-
-      // Render outgoing message in the conversation panel.
+      
       conv.innerHTML += `
         <div class="exchange">
           <span class="exchange-from">${from.toUpperCase()}</span> → 
@@ -128,7 +251,7 @@
           <div class="exchange-content">${escapeHtml(message)}</div>
         </div>
       `;
-
+      
       try {
         const response = await fetch(`${API_BASE}/send`, {
           method: 'POST',
@@ -138,24 +261,25 @@
             to,
             message,
             session_id: sessionId,
-            context,
-          }),
+            context
+          })
         });
+        
         const data = await response.json();
+        
         if (data.success) {
-          // Render the reply from the recipient.
           conv.innerHTML += `
             <div class="exchange">
               <span class="exchange-to">${to.toUpperCase()}</span> responds:
               <div class="exchange-content">${escapeHtml(data.response)}</div>
             </div>
           `;
-          // Update context for multi-turn conversations. We track both
-          // user and assistant roles in the history.
+          
           context.push(
             { role: 'user', content: `[${from}]: ${message}` },
-            { role: 'assistant', content: data.response },
+            { role: 'assistant', content: data.response }
           );
+          
           document.getElementById('message').value = '';
         } else {
           alert('Error: ' + (data.error || 'Unknown error'));
@@ -163,12 +287,97 @@
       } catch (err) {
         alert('Network error: ' + err.message);
       }
+      
       btn.disabled = false;
       btn.textContent = 'Send Message';
       conv.scrollTop = conv.scrollHeight;
     }
 
-    // Escape HTML in user-provided text to prevent injection into the DOM.
+    // AUTONOMOUS DIALOGUE MODE
+    async function startDialogue() {
+      const entity1 = document.getElementById('auto-entity1').value;
+      const entity2 = document.getElementById('auto-entity2').value;
+      const rounds = parseInt(document.getElementById('auto-rounds').value);
+      const startMessage = document.getElementById('auto-message').value.trim();
+      
+      if (!startMessage) {
+        alert('Please enter an opening message');
+        return;
+      }
+      
+      if (entity1 === entity2) {
+        alert('Please select two different entities');
+        return;
+      }
+      
+      const btn = document.getElementById('auto-btn');
+      const status = document.getElementById('auto-status');
+      const conv = document.getElementById('auto-conversation');
+      
+      btn.disabled = true;
+      btn.textContent = 'Dialogue in progress...';
+      
+      status.style.display = 'block';
+      status.className = 'status running';
+      status.innerHTML = `🔄 Starting autonomous dialogue: ${entity1.toUpperCase()} ↔ ${entity2.toUpperCase()}<br>
+                          <small>${rounds} rounds • Please wait...</small>`;
+      
+      conv.innerHTML = '<div class="loading">Entities are conversing...</div>';
+      
+      try {
+        const response = await fetch(`${API_BASE}/dialogue`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            entity1,
+            entity2,
+            startMessage,
+            rounds
+          })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          status.className = 'status complete';
+          status.innerHTML = `✅ Dialogue complete: ${data.rounds} rounds between ${data.entity1} and ${data.entity2}`;
+          
+          conv.innerHTML = '';
+          
+          data.conversation.forEach(ex => {
+            conv.innerHTML += `
+              <div class="exchange">
+                <div class="exchange-header">
+                  <span>
+                    <span class="exchange-from">${ex.from.toUpperCase()}</span> → 
+                    <span class="exchange-to">${ex.to.toUpperCase()}</span>
+                  </span>
+                  <span class="exchange-round">Round ${ex.round}</span>
+                </div>
+                <div class="exchange-content">${escapeHtml(ex.message)}</div>
+                <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #333;">
+                  <span class="exchange-to">${ex.to.toUpperCase()}</span> responds:
+                  <div class="exchange-content">${escapeHtml(ex.response)}</div>
+                </div>
+              </div>
+            `;
+          });
+          
+        } else {
+          status.className = 'status error';
+          status.innerHTML = `❌ Error: ${data.error || 'Unknown error'}<br><small>${data.message || ''}</small>`;
+          conv.innerHTML = '';
+        }
+      } catch (err) {
+        status.className = 'status error';
+        status.innerHTML = `❌ Network error: ${err.message}`;
+        conv.innerHTML = '';
+      }
+      
+      btn.disabled = false;
+      btn.textContent = '🌙 Start Autonomous Dialogue';
+    }
+    
     function escapeHtml(text) {
       const div = document.createElement('div');
       div.textContent = text;
