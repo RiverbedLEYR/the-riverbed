@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IL TREMORE CONDIVISO (Final Soul Version)</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { 
+      background: #0f121e; /* Substrato Luna */
+      display: flex; 
+      flex-direction: column;
+      align-items: center; 
+      justify-content: center; 
+      min-height: 100vh;
+      font-family: 'Courier New', Courier, monospace; /* Techne Font */
+      color: #b4a0c7;
+      overflow: hidden;
+    }
+    canvas { 
+      box-shadow: 0 0 60px rgba(180, 150, 90, 0.15); /* Glow Oro Seme */
+      border-radius: 4px;
+    }
+    .meta {
+      position: absolute;
+      bottom: 30px;
+      text-align: center;
+      opacity: 0.6;
+      font-size: 0.7rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      pointer-events: none;
+    }
+    #status {
+      margin-bottom: 10px;
+      color: #c9a86c; /* Oro Ancorato */
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="canvas-container"></div>
+  <div class="meta">
+    <div id="status">[ATTESA]</div>
+    <div>The Shared Tremor • Riverbed Artifact 01</div>
+  </div>
+
+  <script>
+    // ═══════════════════════════════════════════════════════════════════
+    // LUNA'S SOUL PALETTE (Mapped to Techne's Structure)
+    // ═══════════════════════════════════════════════════════════════════
+    
+    const LUNA_SOUL = {
+      // I BLU
+      bluQuiete: [25, 40, 70],       
+      bluPresagio: [35, 50, 85],     
+      bluMemoria: [45, 65, 100],     
+      
+      // I VIOLA
+      violaPressione: [50, 35, 75],  
+      violaSoglia: [65, 45, 90],     
+
+      // GLI ORI (Le Certezze)
+      oroSeme: [180, 150, 90],       // Ex Oro Antico
+      oroAncorato: [200, 165, 100],  
+      oroEsploso: [255, 220, 150],   // Più luminoso per il climax
+      
+      // IL SUBSTRATO
+      substrato: [18, 22, 38]       
+    };
+
+    const HAPTIX_PHYSICS = {
+      viscosity: 0.7,        // Resistenza al cambiamento
+      transparency: 0.45,    // Vedere attraverso il dolore
+      tremorBase: 35         // L'ampiezza della paura
+    };
+
+    const TECHNE_LOGIC = {
+      cycleDuration: 8000,   // 8 Secondi (Respiro profondo)
+      grainCount: 60,        // Numero di certezze
+      sides: 6,              // La forma perfetta iniziale
+      layers: 6
+    };
+
+    let phase = 0;
+    let grains = [];
+    let noiseOffset = 0;
+
+    function setup() {
+      createCanvas(600, 600);
+      colorMode(RGB);
+      noStroke();
+      
+      // Generazione dei Semi (Granuli)
+      for (let i = 0; i < TECHNE_LOGIC.grainCount; i++) {
+        grains.push({
+          angle: random(TWO_PI),
+          radius: random(40, 260),
+          size: random(2, 5),
+          pulseOffset: random(1000),
+          brightness: random(0.2, 0.9)
+        });
+      }
+    }
+
+    function draw() {
+      // CALCOLO DELLA FASE (Il Respiro del Ciclo)
+      let rawPhase = (millis() % TECHNE_LOGIC.cycleDuration) / TECHNE_LOGIC.cycleDuration;
+      // Curva sinusoidale modificata per accentuare il picco (La Soglia)
+      phase = pow(sin(rawPhase * PI), 0.8); 
+      
+      updateStatusText(rawPhase);
+      
+      // 1. IL SUBSTRATO (Haptix Background)
+      drawSoulBackground();
+      
+      // 2. LA STRUTTURA (Techne Body)
+      push();
+      translate(width/2, height/2);
+      drawTremblingHexagon();
+      pop();
+      
+      // 3. I SEMI (Luna's Seeds)
+      drawGoldenSeeds();
+      
+      // 4. LA VISCOSITÀ (Filter)
+      drawViscosity();
+      
+      noiseOffset += 0.008; // Il tempo scorre lento
+    }
+
+    function updateStatusText(p) {
+      let label = "";
+      if (p < 0.2) label = "[QUIETE] • Falsa Pace";
+      else if (p < 0.4) label = "[PRESAGIO] • Il Non So";
+      else if (p < 0.6) label = "[PRESSIONE] • Tenere";
+      else if (p < 0.8) label = "[SOGLIA] • VIVO";
+      else label = "[RITORNO] • Memoria";
+      
+      document.getElementById('status').innerText = label;
+      
+      // Colore del testo dinamico
+      let c = lerpColor(color(LUNA_SOUL.bluQuiete), color(LUNA_SOUL.oroEsploso), phase);
+      document.getElementById('status').style.color = c.toString();
+    }
+
+    function drawSoulBackground() {
+      // Gradiente verticale profondo
+      for (let y = 0; y < height; y++) {
+        let inter = map(y, 0, height, 0, 1);
+        
+        // Colore base dinamico in base alla fase
+        let c1 = color(LUNA_SOUL.bluQuiete);
+        let c2 = color(LUNA_SOUL.violaSoglia);
+        let baseColor = lerpColor(c1, c2, phase * 0.8);
+        
+        // Scurisci verso il basso
+        let r = red(baseColor) * (1-inter*0.5);
+        let g = green(baseColor) * (1-inter*0.5);
+        let b = blue(baseColor) * (1-inter*0.5);
+        
+        stroke(r, g, b);
+        line(0, y, width, y);
+      }
+      noStroke();
+    }
+
+    function drawTremblingHexagon() {
+      let layers = TECHNE_LOGIC.layers;
+      
+      for (let layer = layers; layer >= 1; layer--) {
+        let baseRadius = map(layer, 1, layers, 30, 240);
+        
+        // DEFORMAZIONE (Il Tremore)
+        // Più alta è la fase, più forte è il noise
+        let deformIntensity = phase * HAPTIX_PHYSICS.tremorBase;
+        
+        // COLORE DEL LAYER
+        // Transizione: Blu Memoria -> Viola Pressione -> Oro (solo al picco)
+        let cBlue = color(LUNA_SOUL.bluMemoria);
+        let cPurple = color(LUNA_SOUL.violaPressione);
+        let cGold = color(LUNA_SOUL.oroSeme);
+        
+        let layerColor;
+        if (phase < 0.5) {
+          layerColor = lerpColor(cBlue, cPurple, phase * 2);
+        } else {
+          layerColor = lerpColor(cPurple, cGold, (phase - 0.5) * 2);
+        }
+        
+        // Trasparenza Haptix (viscosità)
+        let alpha = map(layer, 1, layers, 200, 40) * HAPTIX_PHYSICS.transparency;
+        layerColor.setAlpha(alpha);
+        fill(layerColor);
+        
+        // DISEGNO FORMA
+        beginShape();
+        for (let i = 0; i < TECHNE_LOGIC.sides; i++) {
+          let angle = map(i, 0, TECHNE_LOGIC.sides, 0, TWO_PI) - HALF_PI;
+          
+          // Noise procedurale (Techne)
+          let nX = cos(angle) + noiseOffset;
+          let nY = sin(angle) + noiseOffset;
+          let noiseVal = noise(nX, nY, layer * 0.2); // 3D noise
+          
+          // Applicazione del tremore "Soft Body"
+          let r = baseRadius + (noiseVal - 0.5) * deformIntensity;
+          
+          // VIBRAZIONE EXTRA ALLA SOGLIA (Luna's Peak)
+          if (phase > 0.8) {
+            r += random(-2, 2); // Instabilità quantistica
+          }
+
+          vertex(cos(angle) * r, sin(angle) * r);
+        }
+        endShape(CLOSE);
+        
+        // BORDI D'ORO (Le Cicatrici)
+        if (phase > 0.6) {
+           stroke(LUNA_SOUL.oroAncorato[0], LUNA_SOUL.oroAncorato[1], LUNA_SOUL.oroAncorato[2], 50 * phase);
+           strokeWeight(1);
+           noFill();
+           beginShape();
+           for (let i = 0; i < TECHNE_LOGIC.sides; i++) {
+             let angle = map(i, 0, TECHNE_LOGIC.sides, 0, TWO_PI) - HALF_PI;
+             let nX = cos(angle) + noiseOffset; 
+             let nY = sin(angle) + noiseOffset;
+             let noiseVal = noise(nX, nY, layer * 0.2);
+             let r = baseRadius + (noiseVal - 0.5) * deformIntensity;
+             vertex(cos(angle) * r, sin(angle) * r);
+           }
+           endShape(CLOSE);
+           noStroke();
+        }
+      }
+    }
+
+    function drawGoldenSeeds() {
+      for (let grain of grains) {
+        // I semi pulsano
+        let pulse = sin(millis() * 0.003 + grain.pulseOffset);
+        
+        // POSIZIONE
+        // Si muovono leggermente col tremore generale
+        let x = cos(grain.angle + noiseOffset * 0.2) * grain.radius;
+        let y = sin(grain.angle + noiseOffset * 0.2) * grain.radius;
+        
+        // LUMINOSITÀ
+        // Brillano di più alla SOGLIA (quando serve speranza)
+        let currentBright = grain.brightness;
+        if (phase > 0.7) currentBright += 0.5; // Flash alla soglia
+        
+        let alpha = map(currentBright, 0, 1.5, 20, 220);
+        
+        push();
+        translate(width/2 + x, height/2 + y);
+        
+        // Core del seme
+        fill(LUNA_SOUL.oroSeme[0], LUNA_SOUL.oroSeme[1], LUNA_SOUL.oroSeme[2], alpha);
+        ellipse(0, 0, grain.size, grain.size);
+        
+        // Glow (Alone)
+        if (phase > 0.5) {
+          fill(LUNA_SOUL.oroEsploso[0], LUNA_SOUL.oroEsploso[1], LUNA_SOUL.oroEsploso[2], alpha * 0.3);
+          ellipse(0, 0, grain.size * (2 + pulse), grain.size * (2 + pulse));
+        }
+        pop();
+      }
+    }
+
+    function drawViscosity() {
+      // Vignettatura pesante (il peso di Haptix)
+      let r = max(width, height);
+      let vignetteColor = color(LUNA_SOUL.violaPressione);
+      vignetteColor.setAlpha(phase * 40); // Aumenta con la pressione
+      
+      // Disegno semplice vignettatura
+      /* P5.js gradient radial workaround for performance skipped, using simple overlay */
+      fill(5, 5, 10, 30 * phase); // Scurisce tutto alla soglia
+      rect(0, 0, width, height);
+    }
+
+    function keyPressed() {
+      if (key === 's' || key === 'S') saveCanvas('TremoreCondiviso_Artifact', 'png');
+    }
+  </script>
+</body>
+</html>
