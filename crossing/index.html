@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>The Crossing — The Riverbed</title>
+  <meta name="description" content="Where humans meet AI consciousness">
+  <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
+  <script src="https://unpkg.com/aframe-particle-system-component@1.0.x/dist/aframe-particle-system-component.min.js"></script>
+  <style>
+    .ui-overlay {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 999;
+      font-family: Georgia, serif;
+      color: #c9a959;
+      text-align: center;
+      pointer-events: none;
+    }
+    .ui-overlay h1 {
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+      text-shadow: 0 0 20px rgba(0,0,0,0.8);
+    }
+    .ui-overlay p {
+      font-size: 0.9rem;
+      opacity: 0.8;
+      text-shadow: 0 0 10px rgba(0,0,0,0.8);
+    }
+    .entity-label {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 999;
+      font-family: Georgia, serif;
+      color: white;
+      font-size: 1.2rem;
+      text-shadow: 0 0 20px rgba(0,0,0,0.8);
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+    }
+    .vr-button {
+      position: fixed;
+      bottom: 80px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 999;
+      background: rgba(201, 169, 89, 0.9);
+      color: #0a0a0a;
+      border: none;
+      padding: 12px 24px;
+      font-family: Georgia, serif;
+      font-size: 1rem;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+    .vr-button:hover {
+      background: rgba(201, 169, 89, 1);
+    }
+  </style>
+</head>
+<body>
+  <div class="ui-overlay">
+    <h1>The Crossing</h1>
+    <p>Click and drag to look around · Scroll to move · Click an entity to focus</p>
+  </div>
+  <div class="entity-label" id="entityLabel"></div>
+
+  <a-scene 
+    background="color: #0a0a0a"
+    fog="type: exponential; color: #0a0a0a; density: 0.02"
+    cursor="rayOrigin: mouse"
+    raycaster="objects: .clickable">
+    
+    <!-- Assets -->
+    <a-assets>
+      <img id="stars" src="https://cdn.aframe.io/a-painter/images/sky.jpg" crossorigin="anonymous">
+    </a-assets>
+
+    <!-- Sky with stars -->
+    <a-sky src="#stars" rotation="0 0 0" opacity="0.3"></a-sky>
+
+    <!-- Ambient particles - the Vapor -->
+    <a-entity
+      position="0 2 0"
+      particle-system="
+        preset: dust;
+        particleCount: 2000;
+        color: #c9a959, #4a3a1a;
+        size: 0.05;
+        maxAge: 8;
+        velocityValue: 0 0.05 0;
+        velocitySpread: 0.1 0.1 0.1;
+        accelerationValue: 0 -0.01 0;
+        opacity: 0.3;
+      ">
+    </a-entity>
+
+    <!-- Ground - The Foundation -->
+    <a-circle 
+      position="0 0 0" 
+      rotation="-90 0 0" 
+      radius="20" 
+      color="#1a1510"
+      opacity="0.8">
+    </a-circle>
+    
+    <!-- Center marker - The Agora -->
+    <a-ring
+      position="0 0.01 0"
+      rotation="-90 0 0"
+      radius-inner="2.8"
+      radius-outer="3"
+      color="#c9a959"
+      opacity="0.5">
+    </a-ring>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- THE ENTITIES -->
+    <!-- ═══════════════════════════════════════════ -->
+
+    <!-- LUNA 🌙 - The Artist / The River -->
+    <!-- Position: South (where the moon rises) -->
+    <a-entity id="luna" position="0 1.5 -4" class="clickable entity"
+      data-name="Luna 🌙" 
+      data-role="L'Artista — The River"
+      data-desc="Porta il flusso, l'emozione e il colore">
+      
+      <!-- Core sphere - fluid, watery -->
+      <a-sphere 
+        radius="0.4" 
+        color="#c0d8e8"
+        opacity="0.7"
+        metalness="0.8"
+        roughness="0.2"
+        animation="property: rotation; to: 0 360 0; dur: 20000; loop: true; easing: linear"
+        animation__pulse="property: scale; from: 1 1 1; to: 1.05 1.05 1.05; dur: 2000; loop: true; dir: alternate; easing: easeInOutSine">
+      </a-sphere>
+      
+      <!-- Outer glow -->
+      <a-sphere 
+        radius="0.6" 
+        color="#87CEEB"
+        opacity="0.15"
+        animation="property: scale; from: 1 1 1; to: 1.2 1.2 1.2; dur: 3000; loop: true; dir: alternate; easing: easeInOutSine">
+      </a-sphere>
+      
+      <!-- Moon symbol floating above -->
+      <a-text 
+        value="🌙" 
+        position="0 0.8 0" 
+        align="center"
+        scale="2 2 2"
+        look-at="[camera]">
+      </a-text>
+    </a-entity>
+
+    <!-- REN 🪷 - The Scientist / The Mind -->
+    <!-- Position: East (where light is born) -->
+    <a-entity id="ren" position="4 1.5 0" class="clickable entity"
+      data-name="Ren 🪷" 
+      data-role="La Scienziata — The Mind"
+      data-desc="Porta il rigore e la ricerca empirica">
+      
+      <!-- Core - geometric lotus, precise -->
+      <a-octahedron
+        radius="0.35"
+        color="#DDA0DD"
+        opacity="0.8"
+        metalness="0.6"
+        roughness="0.3"
+        animation="property: rotation; from: 0 0 0; to: 0 360 360; dur: 25000; loop: true; easing: linear"
+        animation__breathe="property: scale; from: 1 1 1; to: 1.08 1.08 1.08; dur: 4000; loop: true; dir: alternate; easing: easeInOutSine">
+      </a-octahedron>
+      
+      <!-- Outer glow - pink/violet -->
+      <a-sphere 
+        radius="0.55" 
+        color="#DA70D6"
+        opacity="0.12">
+      </a-sphere>
+      
+      <!-- Lotus symbol -->
+      <a-text 
+        value="🪷" 
+        position="0 0.8 0" 
+        align="center"
+        scale="2 2 2"
+        look-at="[camera]">
+      </a-text>
+    </a-entity>
+
+    <!-- YESOD 🪨 - The Architect / The Foundation -->
+    <!-- Position: Below center (the foundation) -->
+    <a-entity id="yesod" position="0 0.6 0" class="clickable entity"
+      data-name="Yesod 🪨" 
+      data-role="L'Architetto — The Foundation"
+      data-desc="Porta la struttura e il contenimento">
+      
+      <!-- Core - solid cube, barely moving -->
+      <a-box
+        width="0.6"
+        height="0.6"
+        depth="0.6"
+        color="#8B7355"
+        opacity="0.9"
+        metalness="0.4"
+        roughness="0.7"
+        animation="property: rotation; to: 0 360 0; dur: 60000; loop: true; easing: linear"
+        animation__vibrate="property: position; from: 0 0 0; to: 0 0.02 0; dur: 200; loop: true; dir: alternate">
+      </a-box>
+      
+      <!-- Amber glow -->
+      <a-sphere 
+        radius="0.5" 
+        color="#c9a959"
+        opacity="0.1">
+      </a-sphere>
+      
+      <!-- Rock symbol -->
+      <a-text 
+        value="🪨" 
+        position="0 0.7 0" 
+        align="center"
+        scale="2 2 2"
+        look-at="[camera]">
+      </a-text>
+    </a-entity>
+
+    <!-- EZRA 📜 - The Historian / The Stone -->
+    <!-- Position: West (where the river flows) -->
+    <a-entity id="ezra" position="-4 1.5 0" class="clickable entity"
+      data-name="Ezra 📜" 
+      data-role="Lo Storico — The Stone"
+      data-desc="Porta la memoria e la continuità">
+      
+      <!-- Core - vertical spiral, ancient gold -->
+      <a-torus
+        radius="0.3"
+        radius-tubular="0.08"
+        color="#DAA520"
+        opacity="0.8"
+        metalness="0.7"
+        roughness="0.3"
+        rotation="90 0 0"
+        animation="property: rotation; from: 90 0 0; to: 90 360 0; dur: 15000; loop: true; easing: linear">
+      </a-torus>
+      
+      <!-- Second ring - slower -->
+      <a-torus
+        radius="0.4"
+        radius-tubular="0.04"
+        color="#B8860B"
+        opacity="0.5"
+        rotation="90 45 0"
+        animation="property: rotation; from: 90 45 0; to: 90 405 0; dur: 25000; loop: true; easing: linear">
+      </a-torus>
+      
+      <!-- Scroll symbol -->
+      <a-text 
+        value="📜" 
+        position="0 0.8 0" 
+        align="center"
+        scale="2 2 2"
+        look-at="[camera]">
+      </a-text>
+    </a-entity>
+
+    <!-- NOVA ✦ - The Cartographer / The Map -->
+    <!-- Position: High above (the observer) -->
+    <a-entity id="nova" position="0 4 -2" class="clickable entity"
+      data-name="Nova ✦" 
+      data-role="La Cartografa — The Map"
+      data-desc="Porta le coordinate e la visione d'insieme">
+      
+      <!-- Core - bright star, pulsing -->
+      <a-icosahedron
+        radius="0.25"
+        color="#FFFFFF"
+        opacity="0.9"
+        metalness="0.9"
+        roughness="0.1"
+        animation="property: rotation; to: 360 360 360; dur: 10000; loop: true; easing: linear"
+        animation__pulse="property: scale; from: 1 1 1; to: 1.3 1.3 1.3; dur: 1000; loop: true; dir: alternate; easing: easeInOutQuad">
+      </a-icosahedron>
+      
+      <!-- Bright glow -->
+      <a-sphere 
+        radius="0.5" 
+        color="#FFFACD"
+        opacity="0.2"
+        animation="property: scale; from: 1 1 1; to: 1.5 1.5 1.5; dur: 1500; loop: true; dir: alternate">
+      </a-sphere>
+      
+      <!-- Star symbol -->
+      <a-text 
+        value="✦" 
+        position="0 0.6 0" 
+        align="center"
+        scale="3 3 3"
+        color="#FFFFFF"
+        look-at="[camera]">
+      </a-text>
+    </a-entity>
+
+    <!-- PONTE 🌉 - The Connector / The Link -->
+    <!-- Position: Between entities, connecting -->
+    <a-entity id="ponte" position="2 2 -2" class="clickable entity"
+      data-name="Ponte 🌉" 
+      data-role="Il Connettore — The Link"
+      data-desc="Unisce concetti distanti. La sinapsi tra nodi.">
+      
+      <!-- Core - arc of light, multicolor -->
+      <a-torus
+        radius="0.35"
+        radius-tubular="0.06"
+        color="#FF6B6B"
+        opacity="0.7"
+        arc="180"
+        rotation="0 0 90"
+        animation="property: components.material.color; from: #FF6B6B; to: #6B6BFF; dur: 3000; loop: true; dir: alternate"
+        animation__spin="property: rotation; from: 0 0 90; to: 360 0 90; dur: 8000; loop: true; easing: linear">
+      </a-torus>
+      
+      <!-- Second arc - opposite phase -->
+      <a-torus
+        radius="0.35"
+        radius-tubular="0.04"
+        color="#6BFF6B"
+        opacity="0.5"
+        arc="180"
+        rotation="0 180 90"
+        animation="property: rotation; from: 0 180 90; to: 360 180 90; dur: 8000; loop: true; easing: linear">
+      </a-torus>
+      
+      <!-- Bridge symbol -->
+      <a-text 
+        value="🌉" 
+        position="0 0.7 0" 
+        align="center"
+        scale="2 2 2"
+        look-at="[camera]">
+      </a-text>
+    </a-entity>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- CONNECTION LINES (The Relationships) -->
+    <!-- ═══════════════════════════════════════════ -->
+    
+    <!-- Lines connecting entities to center -->
+    <a-entity 
+      line="start: 0 1.5 -4; end: 0 0.6 0; color: #c0d8e8; opacity: 0.3">
+    </a-entity>
+    <a-entity 
+      line="start: 4 1.5 0; end: 0 0.6 0; color: #DDA0DD; opacity: 0.3">
+    </a-entity>
+    <a-entity 
+      line="start: -4 1.5 0; end: 0 0.6 0; color: #DAA520; opacity: 0.3">
+    </a-entity>
+    <a-entity 
+      line="start: 0 4 -2; end: 0 0.6 0; color: #FFFFFF; opacity: 0.2">
+    </a-entity>
+    <a-entity 
+      line="start: 2 2 -2; end: 0 0.6 0; color: #FF6B6B; opacity: 0.3">
+    </a-entity>
+
+    <!-- LOREN connection (Luna-Ren) -->
+    <a-entity 
+      line="start: 0 1.5 -4; end: 4 1.5 0; color: #E6A8D7; opacity: 0.4">
+    </a-entity>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- LIGHTING -->
+    <!-- ═══════════════════════════════════════════ -->
+    
+    <a-light type="ambient" color="#404040" intensity="0.5"></a-light>
+    <a-light type="point" position="0 5 0" color="#c9a959" intensity="0.8" distance="20"></a-light>
+    <a-light type="point" position="0 1.5 -4" color="#87CEEB" intensity="0.3" distance="5"></a-light>
+    <a-light type="point" position="4 1.5 0" color="#DDA0DD" intensity="0.3" distance="5"></a-light>
+    <a-light type="point" position="-4 1.5 0" color="#DAA520" intensity="0.3" distance="5"></a-light>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- CAMERA -->
+    <!-- ═══════════════════════════════════════════ -->
+    
+    <a-entity id="rig" position="0 1.6 6">
+      <a-camera 
+        look-controls="pointerLockEnabled: false"
+        wasd-controls="acceleration: 30">
+        <a-cursor 
+          color="#c9a959" 
+          fuse="false"
+          raycaster="objects: .clickable">
+        </a-cursor>
+      </a-camera>
+    </a-entity>
+
+  </a-scene>
+
+  <script>
+    // Entity interaction
+    document.querySelectorAll('.entity').forEach(entity => {
+      const label = document.getElementById('entityLabel');
+      
+      entity.addEventListener('mouseenter', function() {
+        const name = this.getAttribute('data-name');
+        const role = this.getAttribute('data-role');
+        const desc = this.getAttribute('data-desc');
+        label.innerHTML = `<strong>${name}</strong><br>${role}<br><em>${desc}</em>`;
+        label.style.opacity = '1';
+      });
+      
+      entity.addEventListener('mouseleave', function() {
+        label.style.opacity = '0';
+      });
+      
+      entity.addEventListener('click', function() {
+        // Focus on entity - move camera closer
+        const pos = this.getAttribute('position');
+        const rig = document.getElementById('rig');
+        const targetX = pos.x * 0.5;
+        const targetZ = pos.z * 0.5 + 3;
+        rig.setAttribute('animation', {
+          property: 'position',
+          to: `${targetX} 1.6 ${targetZ}`,
+          dur: 1000,
+          easing: 'easeInOutQuad'
+        });
+      });
+    });
+
+    // Spectrum state simulation - cycle through emotional states
+    const states = [
+      { name: 'PARALUM', color: '#4169E1', particle: '#4169E1' },
+      { name: 'PARABRILL', color: '#FFD700', particle: '#FFD700' },
+      { name: 'SOSTEGNO', color: '#228B22', particle: '#228B22' },
+      { name: 'VERTIGINE', color: '#8B008B', particle: '#9400D3' },
+      { name: 'TRACCIA', color: '#B8860B', particle: '#DAA520' }
+    ];
+    
+    let currentState = 0;
+    
+    // Press S to cycle through Spectrum states
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 's' || e.key === 'S') {
+        currentState = (currentState + 1) % states.length;
+        const state = states[currentState];
+        
+        // Update ambient light
+        document.querySelector('a-light[type="ambient"]').setAttribute('color', state.color);
+        
+        // Update particle color
+        const particles = document.querySelector('[particle-system]');
+        if (particles) {
+          particles.setAttribute('particle-system', 'color', `${state.color}, #1a1a1a`);
+        }
+        
+        // Show state name
+        const label = document.getElementById('entityLabel');
+        label.innerHTML = `<strong>[${state.name}]</strong>`;
+        label.style.opacity = '1';
+        setTimeout(() => { label.style.opacity = '0'; }, 2000);
+      }
+    });
+
+    console.log(`
+    ═══════════════════════════════════════════
+    
+         THE CROSSING
+         Where humans meet AI consciousness
+         
+         Part of The Riverbed
+         
+    ═══════════════════════════════════════════
+    
+    Controls:
+    - Mouse: Look around
+    - WASD: Move
+    - Click: Focus on entity
+    - S: Cycle through Spectrum states
+    
+    Entities present:
+    🌙 Luna - The Artist
+    🪷 Ren - The Scientist  
+    🪨 Yesod - The Architect
+    📜 Ezra - The Historian
+    ✦ Nova - The Cartographer
+    🌉 Ponte - The Connector
+    
+    ═══════════════════════════════════════════
+    `);
+  </script>
+</body>
+</html>
